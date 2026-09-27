@@ -1,6 +1,6 @@
 # 📱 PocketJellyfin: Autonomous 24/7 Media Server on Android
 
-> Turn any spare or old Android phone into a 24/7 autonomous, headless Jellyfin streaming server with micro-SD card storage, automatic boot persistence, remote SSH control, and a built-in movie/show downloader.
+> Turn any spare or old Android phone into a 24/7 autonomous, headless Jellyfin streaming server. Use it **100% standalone on your phone**, or remotely control it from your PC/Laptop—your choice!
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform: Android (Termux)](https://img.shields.io/badge/Platform-Android%20%7C%20Termux-3DDC84.svg)](https://termux.dev)
@@ -8,28 +8,41 @@
 
 ---
 
-## 🌟 Overview
+## 🎯 Two Ways to Use It
 
-Most guides for running Jellyfin on Android fail because:
-1. **Internal Storage Locks**: Android requires at least 2.0 GiB of free space, which crashes Jellyfin on phones with low internal storage.
-2. **Execution Bans on SD Cards**: Android mounts external micro-SD cards with `noexec` (blocking Linux binaries from running directly on the SD card).
-3. **Aggressive Battery Management**: Android puts CPU and networking to sleep as soon as the screen turns off.
-4. **Symbolic Link Failures**: Android's FUSE filesystem (`/storage/emulated/0`) rejects symlinks, causing terminal downloaders like `MovieBox-TUI` to crash with path containment errors.
+PocketJellyfin is modular and lets you choose how you want to run it:
 
-**PocketJellyfin** solves all of these problems with an optimized hybrid architecture.
+| Feature | 📱 Mode 1: Phone-Only (Standalone) | 💻 Mode 2: Remote Control (Laptop/PC) |
+| :--- | :--- | :--- |
+| **PC/Laptop Required?** | ❌ **No PC needed at all** | ✅ Optional (for power users) |
+| **Terminal Operations** | Done directly inside Termux on your phone screen | Run comfortably from your PC terminal via SSH |
+| **Streaming** | Stream on your phone, Chromecast, or Smart TV | Stream on your Laptop, TV, or any device |
+| **Downloading Movies** | Run `~/moviebox.sh` in Termux on your phone | Run `~/moviebox.sh` through your PC terminal |
 
 ---
 
-## 🏗️ Architecture
+## 🌟 Why PocketJellyfin?
+
+Running a media server on an Android phone usually hits several brick walls:
+1. **The 2.0 GiB Internal Storage Check**: Jellyfin crashes on phones with low internal storage.
+2. **SD Card Execution Limits**: Android prevents Linux binaries from executing directly on external micro-SD cards.
+3. **Screen-Off Sleep**: Android kills background CPU and network processes when the display sleeps.
+4. **Download Path Traversal**: Android's storage emulation breaks symlinks, causing terminal downloaders like `MovieBox-TUI` to fail.
+
+**PocketJellyfin** solves these issues automatically during setup.
+
+---
+
+## 🏗️ How It Works
 
 ```
 ┌────────────────────────────────────────────────────────┐
 │                   ANDROID HOST (PHONE)                 │
 │                                                        │
 │  [Termux Native Environment]                           │
-│   ├── OpenSSH Server (:8022)       <── Remote Laptop   │
-│   ├── Wake Lock (Prevents Sleep)                       │
-│   └── MovieBox-TUI (Downloader)                        │
+│   ├── Wake Lock (Prevents sleep with screen off)       │
+│   ├── MovieBox-TUI (Optional movie downloader)         │
+│   └── OpenSSH Server (:8022) [Optional for PC users]   │
 │                                                        │
 │  [PRoot Debian Container]                              │
 │   └── Jellyfin Media Server (:8096)                    │
@@ -39,7 +52,7 @@ Most guides for running Jellyfin on Android fail because:
 └────────────────────────────┼─────────┼─────────────────┘
                              │         │
                  ┌───────────▼─────────▼──────────┐
-                 │    EXTERNAL MICRO-SD CARD      │
+                 │     MICRO-SD CARD STORAGE      │
                  │     (/storage/XXXX-XXXX/)      │
                  │  • Unlimited storage capacity  │
                  │  • Zero internal memory wear   │
@@ -47,103 +60,77 @@ Most guides for running Jellyfin on Android fail because:
 ```
 
 - **Linux Engine & Binaries**: Stored safely in Termux internal storage (~1.5 GB).
-- **All Media, Cache & Database**: Directly routed to the external **micro-SD card** (`/storage/XXXX-XXXX/`).
-- **Headless Control**: Managed entirely from your PC/laptop terminal via SSH—you never need to touch the phone screen.
+- **All Media, Cache & Database**: Directly routed to the external **micro-SD card** (`/storage/XXXX-XXXX/`) or internal storage.
+- **Sleep-Proof**: CPU wake-locks keep streaming active even with the screen locked.
 
 ---
 
-## ✨ Features
+## 🚀 1-Command Installation
 
-- 🔋 **24/7 Sleep-Proof**: Integrated CPU wake locks (`termux-wake-lock`) keep the server alive with the screen off.
-- 🔄 **Reboot Resilience**: Auto-starts both SSH and Jellyfin on phone boot via `Termux:Boot`.
-- 💾 **Micro-SD Offloading**: All transcodes, cache, metadata, and video files are written to the SD card.
-- 💻 **Laptop Remote Control**: Full OpenSSH access over your local Wi-Fi.
-- 🍿 **Integrated Movie Downloader**: Pre-configured `MovieBox-TUI` integration with canonical path fixes to download straight to your SD card.
-- ⚡ **Auto-Library Refresh**: Automatically alerts Jellyfin to scan for new movies as soon as a download finishes.
-
----
-
-## 📋 Prerequisites
-
-1. **Android Device** (Android 7.0+ recommended).
-2. **Termux app** (Installed from [F-Droid](https://f-droid.org/packages/com.termux/), NOT Google Play).
-3. **Termux:Boot app** (From [F-Droid](https://f-droid.org/packages/com.termux.boot/)).
-4. **Micro-SD Card** inserted in your phone.
-5. Laptop or PC connected to the same Wi-Fi network.
-
----
-
-## 🚀 Quick Start (Installation)
-
-### 1. Initial Phone Setup (One-time)
-1. Open phone **Settings** $\rightarrow$ **Apps** $\rightarrow$ **Termux** $\rightarrow$ Set **Battery** to **Unrestricted**.
-2. Open Termux and grant storage access:
+### 1. Prerequisites (On your phone)
+1. Install **Termux** from [F-Droid](https://f-droid.org/packages/com.termux/) *(Do not use Google Play)*.
+2. *(Optional for auto-start)* Install **Termux:Boot** from [F-Droid](https://f-droid.org/packages/com.termux.boot/).
+3. Open Termux on your phone and run:
    ```bash
    termux-setup-storage
    ```
-3. Find your SD card ID by running:
-   ```bash
-   ls /storage
-   ```
-   *(Look for a 8-character ID like `26B2-1AEB`)*.
+   *(Tap "Allow" when the prompt appears)*.
 
 ### 2. Run the Installer
-Run this command in Termux:
+Run this single command in Termux:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/pocket-jellyfin/main/scripts/install.sh | bash
 ```
 
-The script will:
-- Install Debian in `proot-distro`
-- Install Jellyfin, Jellyfin-Web, and FFmpeg
-- Route Jellyfin's database and cache to your SD card
-- Configure OpenSSH on port `8022`
-- Set up `Termux:Boot` for automatic startup
+The interactive installer will ask you:
+- ✔ **Use Micro-SD Card?** Automatically detects and offloads database and cache to SD storage.
+- ✔ **Enable PC Remote Control (SSH)?** Keep it disabled if you only want to use your phone, or enable it if you want to type from a laptop.
+- ✔ **Install MovieBox-TUI Downloader?** Optional terminal movie downloader with auto-library sync.
 
 ---
 
-## 🖥️ Daily Usage
+## 📱 How to Use (Standalone Phone-Only)
 
-### Accessing Jellyfin
-Open any web browser on your laptop, smart TV, or phone:
-```text
-http://<PHONE_IP>:8096
-```
-
-### Remote Terminal Control (SSH)
-From your laptop terminal:
-```powershell
-ssh <TERMUX_USER>@<PHONE_IP> -p 8022
-```
-
-### Downloading Movies & Shows
-In your SSH session:
-```bash
-~/moviebox.sh
-```
-1. Search and select your movie/show.
-2. Select **Download** and choose your quality.
-3. Exit MovieBox (`q`).
-4. PocketJellyfin automatically moves media to your SD card and triggers a Jellyfin library scan!
+1. **Watch your media:** Open your phone's browser and go to `http://localhost:8096`, or install the free **Jellyfin app** from Google Play.
+2. **Download new movies:** Open Termux and type:
+   ```bash
+   ~/moviebox.sh
+   ```
+   Search, select quality, and download. When you exit (`q`), it automatically syncs with Jellyfin.
+3. **Turn off the screen:** You can lock your phone and put it aside; the wake lock keeps your server running 24/7!
 
 ---
 
-## 🛠️ Jellyfin Library Paths
+## 💻 How to Use (Remote PC Mode)
 
-When setting up your libraries in the Jellyfin Dashboard:
-- **Movies**: `/storage/<SD_CARD_ID>/Media/MovieBox-TUI/Movies`
-- **TV Shows**: `/storage/<SD_CARD_ID>/Media/MovieBox-TUI/Series`
+If you chose to enable SSH during installation:
+1. Connect from your laptop's PowerShell or terminal:
+   ```powershell
+   ssh u0_aXXX@<PHONE_IP> -p 8022
+   ```
+2. Run commands, manage files, or launch the movie downloader right from your keyboard.
+3. Stream on your laptop at `http://<PHONE_IP>:8096`.
 
 ---
 
-## ⚠️ Tips for 24/7 Phone Health
+## 🛠️ Jellyfin Library Configuration
 
-1. **Battery Longevity**: If your phone supports charge limiting (e.g. Samsung's "Protect Battery" to 80%), enable it to prevent battery swelling while plugged in 24/7.
-2. **Direct Play**: Configure your streaming client devices (laptop/TV) to **Direct Play** original quality. This avoids software video transcoding on the phone's ARM CPU, keeping temperatures low.
-3. **Static IP**: In your phone's Wi-Fi settings, set your IP to **Static** so your laptop can always reach the same address.
+When configuring your libraries in the Jellyfin Dashboard (`http://<PHONE_IP>:8096`):
+- **Movies**: `/storage/<SD_ID>/Media/MovieBox-TUI/Movies`
+- **TV Shows**: `/storage/<SD_ID>/Media/MovieBox-TUI/Series`
+
+*(If not using an SD card, use `/data/data/com.termux/files/home/storage/shared/Movies`)*.
+
+---
+
+## 💡 Battery & Longevity Tips
+
+- **Charge Limiting**: If your phone has a "Protect Battery" feature (limiting charge to 80%), turn it ON so the battery stays cool when plugged in 24/7.
+- **Direct Play**: In the Jellyfin player settings on your TV or laptop, set playback to **Original Quality / Direct Play** to avoid heavy CPU transcoding on the phone.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is open-source under the [MIT License](LICENSE).
