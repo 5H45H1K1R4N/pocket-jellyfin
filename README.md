@@ -1,4 +1,4 @@
-# 📱 PocketJellyfin: Autonomous 24/7 Media Server on Android
+﻿# 📱 PocketJellyfin: Autonomous 24/7 Media Server on Android
 
 > Turn any spare or old Android phone into a 24/7 autonomous, headless Jellyfin streaming server. Use it **100% standalone on your phone**, or remotely control it from your PC/Laptop—your choice!
 
@@ -80,7 +80,7 @@ Running a media server on an Android phone usually hits several brick walls:
 Run this single command in Termux:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/pocket-jellyfin/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/scripts/install.sh | bash
 ```
 
 The interactive installer will ask you:
