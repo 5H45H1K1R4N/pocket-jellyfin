@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -535,6 +535,16 @@
             </div>
           </div>
         </div>
+        <!-- Mobile Search Input -->
+        <div style="padding: 0 16px 10px; display: flex; gap: 8px;">
+          <input type="text" id="movieSearchInput" placeholder="Type title to search..." 
+            style="flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:10px 14px; font-size:13px; outline:none;"
+            onkeydown="if(event.key==='Enter') sendSearch(true)">
+          <button class="action-btn" style="padding:10px 16px; border-radius:10px; align-items:center; justify-content:center;" onclick="sendSearch(true)">
+            <span style="font-weight:600; font-size:13px; color:var(--cyan)">Type ↵</span>
+          </button>
+        </div>
+
         <!-- Touch D-Pad -->
         <div style="padding: 0 16px 8px; font-size:11px; color:var(--muted)">Touch Controls</div>
         <div class="dpad">
@@ -543,8 +553,10 @@
           <button class="dpad-btn" onclick="sendKey('left')"><div class="dk">◀</div>Left</button>
           <button class="dpad-btn" onclick="sendKey('right')"><div class="dk">▶</div>Right</button>
           <button class="dpad-btn" onclick="sendKey('enter')"><div class="dk">↵</div>Enter</button>
-          <button class="dpad-btn wide" onclick="sendKey('tab')"><div class="dk">⇥</div>Tab</button>
-          <button class="dpad-btn wide" onclick="sendKey('escape')"><div class="dk">⎋</div>Back/Esc</button>
+          <button class="dpad-btn" onclick="sendKey('space')"><div class="dk">␣</div>Space</button>
+          <button class="dpad-btn" onclick="sendKey('backspace')"><div class="dk">⌫</div>Del</button>
+          <button class="dpad-btn" onclick="sendKey('tab')"><div class="dk">⇥</div>Tab</button>
+          <button class="dpad-btn" onclick="sendKey('escape')"><div class="dk">⎋</div>Back</button>
           <button class="dpad-btn quit" onclick="sendKey('q')"><div class="dk">⏹</div>Quit</button>
         </div>
       </div>
@@ -795,14 +807,35 @@ function showTerminalFallback(container) {
 }
 
 // ── D-Pad keys ──
-function sendKey(key) {
-  const iframe = document.querySelector('#terminalContainer iframe');
-  if (!iframe) return toast('Terminal not active');
-  const map = { up:'\x1b[A', down:'\x1b[B', left:'\x1b[D', right:'\x1b[C', enter:'\r', escape:'\x1b', tab:'\t', q:'q' };
+async function sendKey(key) {
   try {
-    iframe.contentWindow.postMessage({ type: 'key', data: map[key] || key }, '*');
-  } catch(e) {}
-  toast('Sent: ' + key);
+    await fetch(API + '/api/sendkey', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({key})
+    });
+    if (navigator.vibrate) navigator.vibrate(25);
+  } catch(e) {
+    toast('Key error: ' + key);
+  }
+}
+
+async function sendSearch(pressEnter = true) {
+  const input = document.getElementById('movieSearchInput');
+  const text = input.value.trim();
+  if (!text) return;
+  try {
+    await fetch(API + '/api/sendtext', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text, enter: pressEnter})
+    });
+    toast('Sent: ' + text);
+    input.value = '';
+    if (navigator.vibrate) navigator.vibrate(40);
+  } catch(e) {
+    toast('Search error');
+  }
 }
 
 // ── Files ──

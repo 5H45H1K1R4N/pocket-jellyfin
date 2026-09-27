@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 PocketJellyfin Manager - Unified Backend Engine
 Runs as a zero-dependency web service on Android Termux.
@@ -214,7 +214,44 @@ class ManagerHandler(BaseHTTPRequestHandler):
                 except Exception as e:
                     self.send_json({"success": False, "error": str(e)}, status=500)
                     return
-            self.send_json({"success": False, "error": "Invalid path"}, status=400)
+        elif parsed.path == "/api/sendkey":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length).decode("utf-8")
+            params = json.loads(body) if body else {}
+            key = params.get("key", "").lower()
+            key_map = {
+                "up": "Up",
+                "down": "Down",
+                "left": "Left",
+                "right": "Right",
+                "enter": "Enter",
+                "tab": "Tab",
+                "escape": "Escape",
+                "esc": "Escape",
+                "space": "Space",
+                "backspace": "BSpace",
+                "q": "q"
+            }
+            tmux_key = key_map.get(key, key)
+            if tmux_key:
+                subprocess.run(["tmux", "send-keys", "-t", "movies", tmux_key])
+                self.send_json({"success": True})
+                return
+            self.send_json({"success": False, "error": "Unknown key"}, status=400)
+            return
+
+        elif parsed.path == "/api/sendtext":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length).decode("utf-8")
+            params = json.loads(body) if body else {}
+            text = params.get("text", "")
+            if text:
+                subprocess.run(["tmux", "send-keys", "-t", "movies", text])
+                if params.get("enter", False):
+                    subprocess.run(["tmux", "send-keys", "-t", "movies", "Enter"])
+                self.send_json({"success": True})
+                return
+            self.send_json({"success": False, "error": "Empty text"}, status=400)
             return
 
         self.send_error(404)
