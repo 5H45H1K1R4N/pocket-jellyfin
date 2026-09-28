@@ -10,7 +10,8 @@ echo "[1/4] Installing Samba in Termux..."
 pkg update -y
 pkg install samba -y
 
-# 2. Detect SD Card
+# 2. Detect SD Card & Termux User
+TERMUX_USER=$(whoami)
 SD_ID=$(ls /storage 2>/dev/null | grep -E '^[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}$' | head -n 1 || true)
 if [ -n "$SD_ID" ]; then
     SD_PATH="/storage/$SD_ID"
@@ -19,9 +20,10 @@ else
     MEDIA_DIR="$HOME/storage/shared/Movies"
 fi
 mkdir -p "$MEDIA_DIR"
+echo "  ✔ Termux User: $TERMUX_USER"
 echo "  ✔ Sharing folder: $MEDIA_DIR"
 
-# 3. Create Samba configuration
+# 3. Create Samba configuration with proper Android user mapping
 echo "[2/4] Generating Samba configuration ($PREFIX/etc/smb.conf)..."
 mkdir -p "$PREFIX/etc"
 cat << EOF > "$PREFIX/etc/smb.conf"
@@ -33,7 +35,7 @@ cat << EOF > "$PREFIX/etc/smb.conf"
     smb ports = 4445
     bind interfaces only = no
     map to guest = Bad User
-    guest account = nobody
+    guest account = $TERMUX_USER
     load printers = no
     printing = bsd
     printcap name = /dev/null
@@ -46,6 +48,7 @@ cat << EOF > "$PREFIX/etc/smb.conf"
     writable = yes
     guest ok = yes
     browseable = yes
+    force user = $TERMUX_USER
     create mask = 0777
     directory mask = 0777
 EOF
@@ -53,6 +56,7 @@ EOF
 # 4. Start Samba Daemon
 echo "[3/4] Starting Samba service on port 4445..."
 pkill smbd 2>/dev/null || true
+pkill nmbd 2>/dev/null || true
 smbd -D -s "$PREFIX/etc/smb.conf"
 
 # 5. Add to boot script for 24/7 persistence
@@ -73,7 +77,4 @@ echo "=========================================================="
 echo "  Folder Shared:  $MEDIA_DIR"
 echo "  Server Address: \\\\${IP}\\Media"
 echo "  Port:           4445"
-echo ""
-echo "  To connect from Windows, open PowerShell as Admin and run:"
-echo "    net use Z: \\\\${IP}\\Media /TCPPORT:4445 /PERSISTENT:YES"
 echo "=========================================================="
