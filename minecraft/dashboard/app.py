@@ -76,8 +76,20 @@ def ping_minecraft_slp(host="127.0.0.1", port=25565, timeout=1.0):
         s.close()
     return None
 
+def resolve_mc_path(*subpaths):
+    candidate1 = os.path.join(MC_DIR, *subpaths)
+    if os.path.exists(candidate1):
+        return candidate1
+    candidate2 = os.path.join(MC_DIR, "server", *subpaths)
+    if os.path.exists(candidate2):
+        return candidate2
+    candidate3 = os.path.join(MC_DIR, "config", *subpaths)
+    if os.path.exists(candidate3):
+        return candidate3
+    return candidate1
+
 def get_server_properties():
-    props_path = os.path.join(MC_DIR, "server.properties")
+    props_path = resolve_mc_path("server.properties")
     props = {}
     if os.path.exists(props_path):
         try:
@@ -92,13 +104,14 @@ def get_server_properties():
     return props
 
 def save_server_properties(new_props):
-    props_path = os.path.join(MC_DIR, "server.properties")
+    props_path = resolve_mc_path("server.properties")
     if not os.path.exists(props_path):
-        return False
+        props_path = os.path.join(MC_DIR, "server.properties")
     try:
         lines = []
-        with open(props_path, "r", encoding="utf-8", errors="ignore") as f:
-            lines = f.readlines()
+        if os.path.exists(props_path):
+            with open(props_path, "r", encoding="utf-8", errors="ignore") as f:
+                lines = f.readlines()
         
         updated_keys = set()
         new_lines = []
@@ -204,9 +217,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return
 
         elif parsed.path == "/icon.png" or parsed.path == "/server-icon.png":
-            icon_path = os.path.join(MC_DIR, "server-icon.png")
+            icon_path = resolve_mc_path("server-icon.png")
             if not os.path.exists(icon_path):
-                icon_path = os.path.join(MC_DIR, "world", "icon.png")
+                icon_path = resolve_mc_path("world", "icon.png")
             if os.path.exists(icon_path):
                 self.send_response(200)
                 self.send_header("Content-Type", "image/png")
@@ -228,12 +241,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
             rss_mb = get_process_memory() if running else 0
             
             # Check backups
-            backups_dir = os.path.join(MC_DIR, "backups")
+            backups_dir = resolve_mc_path("backups")
             backup_count = len(os.listdir(backups_dir)) if os.path.exists(backups_dir) else 0
 
             # Public playit IP detection from log if active
             playit_ip = None
-            log_path = os.path.join(MC_DIR, "logs", "latest.log")
+            log_path = resolve_mc_path("logs", "latest.log")
             if os.path.exists(log_path):
                 try:
                     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -244,6 +257,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 except Exception:
                     pass
 
+            icon_exists = os.path.exists(resolve_mc_path("server-icon.png")) or os.path.exists(resolve_mc_path("world", "icon.png"))
             data = {
                 "running": running,
                 "version": slp.get("version", "Paper 26.2") if slp else "Paper 26.2",
@@ -258,15 +272,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 "ram_used_mb": rss_mb,
                 "ram_max_mb": 1024,
                 "storage": disk,
-                "world_size_mb": get_dir_size_mb(os.path.join(MC_DIR, "world")),
+                "world_size_mb": get_dir_size_mb(resolve_mc_path("world")),
                 "backup_count": backup_count,
-                "has_icon": os.path.exists(os.path.join(MC_DIR, "server-icon.png")) or os.path.exists(os.path.join(MC_DIR, "world", "icon.png"))
+                "has_icon": icon_exists
             }
             self.send_json(data)
             return
 
         elif parsed.path == "/api/logs":
-            log_path = os.path.join(MC_DIR, "logs", "latest.log")
+            log_path = resolve_mc_path("logs", "latest.log")
             lines = []
             if os.path.exists(log_path):
                 try:
@@ -285,7 +299,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         elif parsed.path == "/api/players":
             # Read ops.json, whitelist.json, banned-players.json, usercache.json
             def read_json_file(filename):
-                p = os.path.join(MC_DIR, filename)
+                p = resolve_mc_path(filename)
                 if os.path.exists(p):
                     try:
                         with open(p, "r", encoding="utf-8") as f:
@@ -386,9 +400,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 subprocess.run(["tmux", "send-keys", "-t", TMUX_SESSION, "save-all flush", "Enter"])
                 time.sleep(2)
 
-            subprocess.run([
-                "tar", "-czf", tar_path, "-C", MC_DIR, "world", "server.properties", "plugins"
-            ], stderr=subprocess.DEVNULL)
+            backup_src = MC_DIR
+            items_to_backup = []
+            for item in ["world", "server.properties", "plugins", "ops.json", "whitelist.json"]:
+                if os.path.exists(os.path.join(MC_DIR, item)):
+                    items_to_backup.append(item)
+                elif os.path.exists(os.path.join(MC_DIR, "server", item)):
+                    backup_src = os.path.join(MC_DIR, "server")
+                    items_to_backup.append(item)
+
+            if items_to_backup:
+                subprocess.run([
+                    "tar", "-czf", tar_path, "-C", backup_src, *items_to_backup
+                ], stderr=subprocess.DEVNULL)
             self.send_json({"success": True, "filename": tar_name})
             return
 
