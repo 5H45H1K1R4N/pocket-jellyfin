@@ -244,16 +244,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
             backups_dir = resolve_mc_path("backups")
             backup_count = len(os.listdir(backups_dir)) if os.path.exists(backups_dir) else 0
 
-            # Public playit IP detection from log if active
+            # Public playit IP or Claim URL detection from log if active
             playit_ip = None
+            playit_claim_url = None
             log_path = resolve_mc_path("logs", "latest.log")
             if os.path.exists(log_path):
                 try:
                     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
-                        recent_logs = f.read()[-4000:]
+                        recent_logs = f.read()[-8000:]
                         m = re.search(r'([a-zA-Z0-9\-]+\.gl\.joinmc\.link|[a-zA-Z0-9\-]+\.playit\.gg:\d+)', recent_logs)
                         if m:
                             playit_ip = m.group(1)
+                        m2 = re.search(r'(https://playit\.gg/claim/[a-zA-Z0-9\-_]+)', recent_logs)
+                        if m2:
+                            playit_claim_url = m2.group(1)
+                except Exception:
+                    pass
+
+            # Installed plugins list
+            plugins_list = []
+            pdir = resolve_mc_path("plugins")
+            if os.path.exists(pdir):
+                try:
+                    for f in os.listdir(pdir):
+                        if f.endswith(".jar"):
+                            clean_name = f.replace(".jar", "").split("-")[0]
+                            plugins_list.append(clean_name)
                 except Exception:
                     pass
 
@@ -269,6 +285,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 "bedrock_port": 19132,
                 "local_ip": get_local_ip(),
                 "playit_ip": playit_ip,
+                "playit_claim_url": playit_claim_url,
+                "plugins": plugins_list,
                 "ram_used_mb": rss_mb,
                 "ram_max_mb": 1024,
                 "storage": disk,

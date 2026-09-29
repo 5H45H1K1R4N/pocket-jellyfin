@@ -420,6 +420,23 @@
               </div>
               <button class="btn-copy" onclick="copyText(document.getElementById('addrPlayit').textContent)">Copy</button>
             </div>
+            <div class="address-box" id="playitClaimBox" style="display:none; background: rgba(47,107,248,0.12); border-color: rgba(47,107,248,0.4);">
+              <div>
+                <div class="addr-title" style="color: #60a5fa;">Public Tunnel Not Linked Yet</div>
+                <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Click to claim your free public domain for multiplayer:</div>
+              </div>
+              <a class="btn-power btn-start" id="btnClaimPlayit" href="#" target="_blank" style="text-decoration:none; padding: 6px 14px; font-size:12px;">🔗 Claim Tunnel</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plugins Card -->
+        <div class="card" id="pluginsCard">
+          <div class="card-header">
+            <div class="card-title">🧩 Active Multiplayer Plugins</div>
+          </div>
+          <div class="card-body" id="pluginsContainer" style="display:flex; flex-wrap:wrap; gap:8px;">
+            <span style="color:var(--muted); font-size:12px;">Scanning plugins...</span>
           </div>
         </div>
 
@@ -645,7 +662,28 @@
 
         if (d.playit_ip) {
           document.getElementById('playitBox').style.display = 'flex';
+          document.getElementById('playitClaimBox').style.display = 'none';
           document.getElementById('addrPlayit').textContent = d.playit_ip;
+        } else if (d.playit_claim_url) {
+          document.getElementById('playitBox').style.display = 'none';
+          document.getElementById('playitClaimBox').style.display = 'flex';
+          document.getElementById('btnClaimPlayit').href = d.playit_claim_url;
+        } else {
+          document.getElementById('playitBox').style.display = 'none';
+          document.getElementById('playitClaimBox').style.display = 'none';
+        }
+
+        // Active plugins
+        const pCont = document.getElementById('pluginsContainer');
+        if (d.plugins && d.plugins.length > 0) {
+          pCont.innerHTML = d.plugins.map(p => `
+            <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:var(--green); font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px;">
+              <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+              ${p}
+            </span>
+          `).join('');
+        } else {
+          pCont.innerHTML = '<span style="color:var(--muted); font-size:12px;">No plugins loaded yet.</span>';
         }
 
       } catch(e) {}
