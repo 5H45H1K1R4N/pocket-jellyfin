@@ -131,6 +131,34 @@ When configuring your libraries in the Jellyfin Dashboard (`http://<PHONE_IP>:80
 
 ---
 
+## 🎮 Minecraft Java + PaperMC Server Module
+
+Host your personal **Minecraft Java Edition** world locally on your phone 24/7! Powered by **PaperMC** running inside the Debian PRoot container.
+
+### Features
+* **PaperMC Engine**: Extremely optimized for performance with low CPU usage and Aikar's G1GC tuning.
+* **Aternos World Migration**: Easily import your existing Aternos/Paper world without losing builds, inventories, or progress (`minecraft world import`).
+* **Storage Choice**: Place your world on your fast internal storage or micro-SD card.
+* **Managed Background Service**: Runs inside a background `tmux` session with wake-lock—your server stays online even when the screen is locked.
+* **Live Interactive Console**: Attach to the server console anytime with `minecraft console`.
+
+### Quick Install
+```bash
+curl -fsSL https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/scripts/setup_minecraft.sh | bash
+```
+
+### Essential Commands
+* `minecraft start` — Start server in background
+* `minecraft console` — Access live server console (type `op`, `save-all`, etc.)
+* `minecraft world import <path>` — Import your existing Aternos world
+* `minecraft backup` — Create a full world backup
+* `minecraft status` — View live RAM, player count, and storage stats
+* `minecraft stop` — Gracefully save and stop server
+
+📖 *For full world migration instructions, plugin setup, and configuration details, read the [Minecraft Documentation](docs/MINECRAFT.md).*
+
+---
+
 ## 📄 License
 
 This project is open-source under the [MIT License](LICENSE).

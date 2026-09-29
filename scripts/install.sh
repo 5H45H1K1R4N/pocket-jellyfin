@@ -124,7 +124,23 @@ EOF
     echo "  ✔ MovieBox-TUI installed! Run '~/moviebox.sh' to download media."
 fi
 
-# 6. Configure Auto-Boot
+# 6. Optional Feature: Minecraft Java + PaperMC Server
+echo ""
+read -p "[Optional] Install Minecraft Java Edition (PaperMC Server)? [y/N]: " INSTALL_MINECRAFT
+INSTALL_MINECRAFT=${INSTALL_MINECRAFT:-N}
+
+MC_BOOT_LINE=""
+if [[ "$INSTALL_MINECRAFT" =~ ^[Yy]$ ]]; then
+    echo "  Setting up Minecraft Java module..."
+    pkg install tmux curl jq unzip tar -y 2>/dev/null || true
+    curl -fsSL "https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/scripts/minecraft_service.sh" -o "$PREFIX/bin/minecraft"
+    chmod +x "$PREFIX/bin/minecraft"
+    ln -sfn "$PREFIX/bin/minecraft" "$PREFIX/bin/mc"
+    "$PREFIX/bin/minecraft" install
+    MC_BOOT_LINE="minecraft start 2>/dev/null || true"
+fi
+
+# 7. Configure Auto-Boot
 echo ""
 echo "[5/5] Configuring Auto-Boot Startup..."
 mkdir -p "$HOME/.termux/boot"
@@ -138,6 +154,7 @@ cat << EOF > "$HOME/.termux/boot/start-jellyfin.sh"
 #!/data/data/com.termux/files/usr/bin/bash
 termux-wake-lock
 $SSH_LINE
+$MC_BOOT_LINE
 echo "Starting PocketJellyfin..."
 proot-distro login debian --bind /storage:/storage -- jellyfin --datadir "$DATA_DIR" --cachedir "$CACHE_DIR"
 EOF
