@@ -81,7 +81,7 @@ check_proot() {
         log_err "proot-distro is not installed in Termux. Please run: pkg install proot-distro"
         exit 1
     fi
-    if [ ! -d "$PREFIX/var/lib/proot-distro/installed-rootfs/${PROOT_DISTRO}" ] && ! proot-distro list 2>/dev/null | grep -E -q "(\* ${PROOT_DISTRO}|${PROOT_DISTRO} \(installed\))"; then
+    if ! proot-distro list 2>&1 | grep -q "${PROOT_DISTRO}"; then
         log_err "PRoot Debian container is not installed. Please run: proot-distro install debian"
         exit 1
     fi

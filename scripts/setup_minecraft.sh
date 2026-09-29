@@ -24,7 +24,7 @@ pkg install proot-distro tmux curl jq unzip tar -y
 
 # 3. Ensure PRoot Debian exists
 echo "[2/4] Verifying Debian Linux environment..."
-if [ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/debian" ] || proot-distro list 2>/dev/null | grep -E -q '(\* debian|debian \(installed\))'; then
+if proot-distro list 2>&1 | grep -q "debian"; then
     echo "  ✔ PRoot Debian is installed."
 else
     echo "  Installing Debian PRoot environment..."
@@ -33,7 +33,7 @@ fi
 
 # 4. Download and install the Minecraft CLI service
 echo "[3/4] Installing 'minecraft' command in Termux ($PREFIX/bin/minecraft)..."
-SERVICE_URL="https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/scripts/minecraft_service.sh"
+SERVICE_URL="https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/scripts/minecraft_service.sh?t=$(date +%s)"
 mkdir -p "$PREFIX/bin"
 curl -fsSL "$SERVICE_URL" -o "$PREFIX/bin/minecraft"
 chmod +x "$PREFIX/bin/minecraft"
