@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PocketMC — Minecraft Server Panel</title>
+<link rel="icon" href="/icon.png" type="image/png">
+<style>
+  :root {
+    --bg: #11131a;
+    --sidebar: #171922;
+    --card: #1c1f2b;
+    --card-hover: #232737;
+    --border: #282c3f;
+    --text: #e2e8f0;
+    --muted: #79829c;
+    --blue: #2f6bf8;
+    --blue-glow: rgba(47, 107, 248, 0.25);
+    --green: #22c55e;
+    --green-glow: rgba(34, 197, 94, 0.2);
+    --red: #ef4444;
+    --red-glow: rgba(239, 68, 68, 0.2);
+    --yellow: #f59e0b;
+    --purple: #a855f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 230px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    min-height: 100vh;
+  }
+  .sidebar-header {
+    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, #2f6bf8, #3b82f6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px var(--blue-glow);
+  }
+  .brand-title { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
+  .brand-sub { font-size: 11px; color: var(--muted); }
+
+  .nav-menu { padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 13px; font-weight: 600;
+    background: transparent; border: none;
+    cursor: pointer; transition: all 0.15s;
+    text-align: left; width: 100%;
+  }
+  .nav-btn .icon { font-size: 18px; line-height: 1; }
+  .nav-btn:hover { color: var(--text); background: var(--card); }
+  .nav-btn.active { color: white; background: var(--blue); box-shadow: 0 4px 14px var(--blue-glow); }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  /* ── Main Layout ── */
+  .main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-y: auto; }
+  .top-header {
+    height: 60px;
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(17, 19, 26, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .top-title { font-size: 16px; font-weight: 700; }
+  .status-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 30px;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .status-badge.online { background: var(--green-glow); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .status-badge.offline { background: var(--red-glow); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .content { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; max-width: 1000px; width: 100%; margin: 0 auto; }
+  .tab-pane { display: none; flex-direction: column; gap: 18px; }
+  .tab-pane.active { display: flex; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); }
+  .card-body { padding: 20px; }
+
+  /* ── Server Hero ── */
+  .server-hero {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap;
+    background: linear-gradient(135deg, rgba(47,107,248,0.1), rgba(28,31,43,0.9));
+  }
+  .server-info-left { display: flex; align-items: center; gap: 16px; }
+  .server-icon-img {
+    width: 68px; height: 68px; border-radius: 12px;
+    background: #0d0f14; border: 2px solid var(--border);
+    image-rendering: pixelated; object-fit: cover;
+  }
+  .server-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .server-motd { font-size: 12px; color: var(--muted); font-family: monospace; white-space: pre-wrap; }
+
+  .power-controls { display: flex; gap: 10px; }
+  .btn-power {
+    padding: 12px 24px; border-radius: 10px;
+    font-weight: 700; font-size: 13px;
+    cursor: pointer; border: none;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.15s;
+  }
+  .btn-start { background: var(--green); color: white; box-shadow: 0 4px 14px var(--green-glow); }
+  .btn-start:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-stop { background: var(--red); color: white; box-shadow: 0 4px 14px var(--red-glow); }
+  .btn-stop:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-restart { background: var(--card-hover); color: var(--text); border: 1px solid var(--border); }
+  .btn-restart:hover { background: #2f344a; }
+
+  /* ── Stats Grid ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .stat-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); }
+  .stat-val { font-size: 24px; font-weight: 800; line-height: 1; }
+  .progress-track { height: 6px; border-radius: 6px; background: var(--border); overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+
+  /* ── Address Rows ── */
+  .address-box {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-radius: 10px;
+    background: var(--sidebar); border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .address-box:last-child { margin-bottom: 0; }
+  .addr-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .addr-code { font-family: monospace; font-size: 14px; font-weight: 700; color: #38bdf8; }
+  .btn-copy {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-copy:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* ── Console ── */
+  .console-wrapper {
+    background: #0b0c10; border-radius: 12px;
+    border: 1px solid #1f2333; overflow: hidden;
+    display: flex; flex-direction: column; height: 500px;
+  }
+  .console-screen {
+    flex: 1; padding: 16px; overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12.5px; line-height: 1.6; color: #c9d1d9;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .console-line.info { color: #8b949e; }
+  .console-line.warn { color: #f59e0b; }
+  .console-line.error { color: #ef4444; }
+  .console-input-row {
+    padding: 10px 14px; background: #12141c;
+    border-top: 1px solid #1f2333;
+    display: flex; gap: 8px;
+  }
+  .console-input {
+    flex: 1; background: #0b0c10; border: 1px solid #282c3f;
+    border-radius: 8px; padding: 10px 14px;
+    color: white; font-family: monospace; font-size: 13px; outline: none;
+  }
+  .console-input:focus { border-color: var(--blue); }
+  .quick-commands { display: flex; gap: 6px; padding: 8px 14px; background: #141620; border-top: 1px solid #1f2333; overflow-x: auto; }
+  .quick-btn {
+    background: #1c1f2b; border: 1px solid #282c3f;
+    color: #94a3b8; border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; font-family: monospace; cursor: pointer;
+  }
+  .quick-btn:hover { color: white; border-color: var(--blue); }
+
+  /* ── Options / Settings Form ── */
+  .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .option-card {
+    background: var(--sidebar); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .option-info { flex: 1; padding-right: 12px; }
+  .option-name { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+  .option-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .select-input, .text-input {
+    background: var(--card); border: 1px solid var(--border);
+    color: white; padding: 8px 12px; border-radius: 8px;
+    font-size: 13px; outline: none;
+  }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background-color: var(--border); transition: .2s; border-radius: 24px;
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px;
+    left: 3px; bottom: 3px; background-color: white;
+    transition: .2s; border-radius: 50%;
+  }
+  input:checked + .slider { background-color: var(--blue); }
+  input:checked + .slider:before { transform: translateX(20px); }
+
+  /* ── Players List ── */
+  .player-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-radius: 10px;
+    background: var(--sidebar); border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .player-card:last-child { margin-bottom: 0; }
+  .player-left { display: flex; align-items: center; gap: 12px; }
+  .player-avatar { width: 36px; height: 36px; border-radius: 6px; image-rendering: pixelated; }
+  .player-name { font-weight: 700; font-size: 14px; }
+  .player-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: rgba(47,107,248,0.2); color: #60a5fa; }
+
+  /* ── Backups ── */
+  .backup-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+  }
+  .backup-item:last-child { border-bottom: none; }
+  .backup-name { font-weight: 700; font-size: 13px; }
+  .backup-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #1e2233; border: 1px solid var(--border);
+    color: white; padding: 12px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.25s ease; z-index: 100;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; min-height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    .nav-menu { flex-direction: row; overflow-x: auto; padding: 8px 14px; }
+    .nav-btn { flex-shrink: 0; padding: 8px 12px; }
+    .sidebar-footer { display: none; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon">🎮</div>
+      <div>
+        <div class="brand-title">PocketMC</div>
+        <div class="brand-sub">Paper 26.2 Server Panel</div>
+      </div>
+    </div>
+    <nav class="nav-menu">
+      <button class="nav-btn active" onclick="switchTab('server', this)">
+        <span class="icon">🖥️</span>Server
+      </button>
+      <button class="nav-btn" onclick="switchTab('console', this)">
+        <span class="icon">💻</span>Console
+      </button>
+      <button class="nav-btn" onclick="switchTab('options', this)">
+        <span class="icon">⚙️</span>Options
+      </button>
+      <button class="nav-btn" onclick="switchTab('players', this)">
+        <span class="icon">👥</span>Players
+      </button>
+      <button class="nav-btn" onclick="switchTab('backups', this)">
+        <span class="icon">💾</span>Backups
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div>Running on Android Phone</div>
+      <div>PocketJellyfin Fleet</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <header class="top-header">
+      <div class="top-title" id="pageTitle">Server Overview</div>
+      <div class="status-badge online" id="statusBadge">
+        <span class="pulse-dot"></span>
+        <span id="statusText">ONLINE</span>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ────────── TAB: SERVER ────────── -->
+      <section class="tab-pane active" id="tab-server">
+
+        <!-- Hero Card -->
+        <div class="card card-body server-hero">
+          <div class="server-info-left">
+            <img class="server-icon-img" id="serverIcon" src="/icon.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'64\' height=\'64\' viewBox=\'0 0 24 24\' fill=\'%232f6bf8\'%3E%3Cpath d=\'M4 6h16v12H4z\'/%3E%3C/svg%3E'">
+            <div>
+              <div class="server-name" id="serverName">PocketSMP</div>
+              <div class="server-motd" id="serverMotd">PaperMC 26.2 Server</div>
+            </div>
+          </div>
+          <div class="power-controls">
+            <button class="btn-power btn-start" id="btnStart" onclick="sendPower('start')" style="display:none">
+              ▶ Start
+            </button>
+            <button class="btn-power btn-stop" id="btnStop" onclick="sendPower('stop')">
+              ⏹ Stop
+            </button>
+            <button class="btn-power btn-restart" onclick="sendPower('restart')">
+              🔄 Restart
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Metrics Grid -->
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">👥 Players Online</div>
+            <div class="stat-val" id="playerCount">0 / 10</div>
+            <div class="progress-track">
+              <div class="progress-fill" id="playerProgress" style="width: 0%; background: #38bdf8;"></div>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">⚡ TPS (Ticks Per Second)</div>
+            <div class="stat-val" style="color: var(--green);">20.0</div>
+            <div style="font-size: 11px; color: var(--muted);">Optimal Smooth Performance</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">🧠 RAM Allocation</div>
+            <div class="stat-val" id="ramVal">-- MB / 1024 MB</div>
+            <div class="progress-track">
+              <div class="progress-fill" id="ramProgress" style="width: 50%; background: var(--purple);"></div>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">💾 SD Card Free</div>
+            <div class="stat-val" id="storageVal">-- GB</div>
+            <div style="font-size: 11px; color: var(--muted);">Plenty of room for chunks</div>
+          </div>
+        </div>
+
+        <!-- Connection Addresses Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🌐 Connect to Server</div>
+          </div>
+          <div class="card-body">
+            <div class="address-box">
+              <div>
+                <div class="addr-title">Java Edition (Local Wi-Fi)</div>
+                <div class="addr-code" id="addrJavaLocal">192.168.31.178:25565</div>
+              </div>
+              <button class="btn-copy" onclick="copyText(document.getElementById('addrJavaLocal').textContent)">Copy</button>
+            </div>
+            <div class="address-box">
+              <div>
+                <div class="addr-title">Bedrock Edition (Phones / Consoles)</div>
+                <div class="addr-code" id="addrBedrock">192.168.31.178 (Port: 19132)</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('192.168.31.178')">Copy</button>
+            </div>
+            <div class="address-box" id="playitBox" style="display:none;">
+              <div>
+                <div class="addr-title">Public Playit.gg Address</div>
+                <div class="addr-code" id="addrPlayit">--</div>
+              </div>
+              <button class="btn-copy" onclick="copyText(document.getElementById('addrPlayit').textContent)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ────────── TAB: CONSOLE ────────── -->
+      <section class="tab-pane" id="tab-console">
+        <div class="console-wrapper">
+          <div class="console-screen" id="consoleScreen">Connecting to server console...</div>
+          <div class="quick-commands">
+            <button class="quick-btn" onclick="sendCmd('time set day')">☀ Day</button>
+            <button class="quick-btn" onclick="sendCmd('weather clear')">🌧 Clear</button>
+            <button class="quick-btn" onclick="sendCmd('save-all flush')">💾 Save Chunks</button>
+            <button class="quick-btn" onclick="sendCmd('tps')">⚡ TPS</button>
+            <button class="quick-btn" onclick="sendCmd('spark tps')">📊 Spark</button>
+          </div>
+          <form class="console-input-row" onsubmit="handleCmdSubmit(event)">
+            <input type="text" class="console-input" id="cmdInput" placeholder="Type a server command (e.g. op YourName, time set day)..." autocomplete="off">
+            <button type="submit" class="btn-power btn-start" style="padding: 10px 18px;">Send ↵</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ────────── TAB: OPTIONS ────────── -->
+      <section class="tab-pane" id="tab-options">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚙️ Server Properties</div>
+            <button class="btn-power btn-start" style="padding: 6px 14px; font-size: 12px;" onclick="saveOptions()">Save Changes</button>
+          </div>
+          <div class="card-body">
+            <div class="options-grid">
+              
+              <div class="option-card">
+                <div class="option-info">
+                  <div class="option-name">Gamemode</div>
+                  <div class="option-desc">Default player gamemode</div>
+                </div>
+                <select class="select-input" id="optGamemode">
+                  <option value="survival">Survival</option>
+                  <option value="creative">Creative</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="spectator">Spectator</option>
+                </select>
+              </div>
+
+              <div class="option-card">
+                <div class="option-info">
+                  <div class="option-name">Difficulty</div>
+                  <div class="option-desc">World combat & mob difficulty</div>
+                </div>
+                <select class="select-input" id="optDifficulty">
+                  <option value="peaceful">Peaceful</option>
+                  <option value="easy">Easy</option>
+                  <option value="normal">Normal</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+
+              <div class="option-card">
+                <div class="option-info">
+                  <div class="option-name">Cracked / Offline Mode</div>
+                  <div class="option-desc">Allow players without Mojang license</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="optCracked">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="option-card">
+                <div class="option-info">
+                  <div class="option-name">PvP (Player vs Player)</div>
+                  <div class="option-desc">Allow players to attack each other</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="optPvp">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="option-card">
+                <div class="option-info">
+                  <div class="option-name">Whitelist</div>
+                  <div class="option-desc">Only permitted players can join</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="optWhitelist">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="option-card">
+                <div class="option-info">
+                  <div class="option-name">Max Players</div>
+                  <div class="option-desc">Simultaneous player slots</div>
+                </div>
+                <input type="number" class="text-input" id="optMaxPlayers" style="width: 70px;" min="1" max="20" value="10">
+              </div>
+
+            </div>
+
+            <!-- MOTD Editor -->
+            <div style="margin-top: 20px;">
+              <div class="card-title" style="margin-bottom: 8px;">Message of the Day (MOTD)</div>
+              <input type="text" class="text-input" id="optMotd" style="width: 100%; font-family: monospace;" placeholder="PocketJellyfin | PaperMC Server">
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ────────── TAB: PLAYERS ────────── -->
+      <section class="tab-pane" id="tab-players">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">👑 Server Operators (OPs)</div>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="text-input" id="newOpInput" placeholder="Player username..." style="padding: 6px 10px; font-size: 12px;">
+              <button class="btn-power btn-start" style="padding: 6px 12px; font-size: 12px;" onclick="addOp()">+ Add OP</button>
+            </div>
+          </div>
+          <div class="card-body" id="opsList">
+            <div style="color: var(--muted); font-size: 13px;">Loading OPs...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ────────── TAB: BACKUPS ────────── -->
+      <section class="tab-pane" id="tab-backups">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💾 World Backups</div>
+            <button class="btn-power btn-start" style="padding: 8px 16px; font-size: 12px;" onclick="triggerBackup()">+ Create Instant Backup</button>
+          </div>
+          <div id="backupsList">
+            <div style="padding: 20px; color: var(--muted);">Loading backups...</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="toast" id="toast">Message</div>
+
+  <script>
+    const API = '';
+    let currentTab = 'server';
+
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+      currentTab = name;
+
+      const titles = {
+        server: 'Server Overview',
+        console: 'Live Server Console',
+        options: 'Server Configuration',
+        players: 'Player & Permissions',
+        backups: 'World Backups'
+      };
+      document.getElementById('pageTitle').textContent = titles[name] || 'PocketMC';
+
+      if (name === 'console') fetchLogs();
+      if (name === 'options') fetchOptions();
+      if (name === 'players') fetchPlayers();
+      if (name === 'backups') fetchBackups();
+    }
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function copyText(str) {
+      navigator.clipboard.writeText(str).then(() => toast('📋 Copied: ' + str)).catch(() => toast('Copy: ' + str));
+    }
+
+    async function fetchStatus() {
+      try {
+        const r = await fetch(API + '/api/status');
+        const d = await r.json();
+
+        // Status badge
+        const badge = document.getElementById('statusBadge');
+        const txt = document.getElementById('statusText');
+        const btnStart = document.getElementById('btnStart');
+        const btnStop = document.getElementById('btnStop');
+
+        if (d.running) {
+          badge.className = 'status-badge online';
+          txt.textContent = 'ONLINE';
+          btnStart.style.display = 'none';
+          btnStop.style.display = 'flex';
+        } else {
+          badge.className = 'status-badge offline';
+          txt.textContent = 'OFFLINE';
+          btnStart.style.display = 'flex';
+          btnStop.style.display = 'none';
+        }
+
+        // Metrics
+        document.getElementById('serverName').textContent = d.version || 'Paper 26.2';
+        document.getElementById('serverMotd').textContent = d.motd || '';
+        document.getElementById('playerCount').textContent = `${d.players_online} / ${d.players_max}`;
+        document.getElementById('playerProgress').style.width = Math.min(100, (d.players_online / d.players_max) * 100) + '%';
+        
+        document.getElementById('ramVal').textContent = `${d.ram_used_mb} MB / ${d.ram_max_mb} MB`;
+        document.getElementById('ramProgress').style.width = Math.min(100, (d.ram_used_mb / d.ram_max_mb) * 100) + '%';
+
+        if (d.storage) {
+          document.getElementById('storageVal').textContent = `${d.storage.free_gb} GB Free`;
+        }
+
+        // Addresses
+        document.getElementById('addrJavaLocal').textContent = `${d.local_ip}:${d.port}`;
+        document.getElementById('addrBedrock').textContent = `${d.local_ip} (Port: ${d.bedrock_port})`;
+
+        if (d.playit_ip) {
+          document.getElementById('playitBox').style.display = 'flex';
+          document.getElementById('addrPlayit').textContent = d.playit_ip;
+        }
+
+      } catch(e) {}
+    }
+
+    async function sendPower(action) {
+      toast(`[Power] Sending ${action}...`);
+      await fetch(API + '/api/power', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action})
+      });
+      setTimeout(fetchStatus, 1500);
+    }
+
+    // ── Console ──
+    async function fetchLogs() {
+      if (currentTab !== 'console') return;
+      try {
+        const r = await fetch(API + '/api/logs');
+        const d = await r.json();
+        const screen = document.getElementById('consoleScreen');
+        if (d.lines && d.lines.length > 0) {
+          screen.innerHTML = d.lines.map(line => {
+            let cls = 'info';
+            if (line.includes('WARN')) cls = 'warn';
+            if (line.includes('ERROR')) cls = 'error';
+            return `<div class="console-line ${cls}">${escapeHtml(line)}</div>`;
+          }).join('');
+          screen.scrollTop = screen.scrollHeight;
+        }
+      } catch(e) {}
+    }
+
+    function escapeHtml(text) {
+      const map = {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'};
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    async function handleCmdSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('cmdInput');
+      const cmd = input.value.trim();
+      if (!cmd) return;
+      input.value = '';
+      await sendCmd(cmd);
+    }
+
+    async function sendCmd(cmd) {
+      toast('Command: /' + cmd);
+      await fetch(API + '/api/command', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({command: cmd})
+      });
+      setTimeout(fetchLogs, 500);
+    }
+
+    // ── Options ──
+    async function fetchOptions() {
+      try {
+        const r = await fetch(API + '/api/options');
+        const p = await r.json();
+        if (p.gamemode) document.getElementById('optGamemode').value = p.gamemode;
+        if (p.difficulty) document.getElementById('optDifficulty').value = p.difficulty;
+        document.getElementById('optCracked').checked = (p['online-mode'] === 'false');
+        document.getElementById('optPvp').checked = (p.pvp !== 'false');
+        document.getElementById('optWhitelist').checked = (p['white-list'] === 'true');
+        if (p['max-players']) document.getElementById('optMaxPlayers').value = p['max-players'];
+        if (p.motd) document.getElementById('optMotd').value = p.motd;
+      } catch(e) {}
+    }
+
+    async function saveOptions() {
+      const payload = {
+        "gamemode": document.getElementById('optGamemode').value,
+        "difficulty": document.getElementById('optDifficulty').value,
+        "online-mode": document.getElementById('optCracked').checked ? "false" : "true",
+        "pvp": document.getElementById('optPvp').checked ? "true" : "false",
+        "white-list": document.getElementById('optWhitelist').checked ? "true" : "false",
+        "max-players": document.getElementById('optMaxPlayers').value,
+        "motd": document.getElementById('optMotd').value
+      };
+      const r = await fetch(API + '/api/options', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await r.json();
+      if (d.success) toast('✅ Settings saved! (Restart server to apply)');
+      else toast('❌ Failed to save settings');
+    }
+
+    // ── Players ──
+    async function fetchPlayers() {
+      try {
+        const r = await fetch(API + '/api/players');
+        const d = await r.json();
+        const el = document.getElementById('opsList');
+        if (!d.ops || d.ops.length === 0) {
+          el.innerHTML = '<div style="color:var(--muted)">No operators assigned yet. Type your name above to become OP!</div>';
+        } else {
+          el.innerHTML = d.ops.map(o => `
+            <div class="player-card">
+              <div class="player-left">
+                <img class="player-avatar" src="https://mc-heads.net/avatar/${o.name || 'steve'}/36" onerror="this.src='https://mc-heads.net/avatar/steve/36'">
+                <div>
+                  <div class="player-name">${o.name}</div>
+                  <div style="font-size:11px;color:var(--muted)">Level ${o.level || 4} Operator</div>
+                </div>
+              </div>
+              <button class="btn-copy" style="color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="sendCmd('deop ${o.name}')">Remove</button>
+            </div>
+          `).join('');
+        }
+      } catch(e) {}
+    }
+
+    function addOp() {
+      const input = document.getElementById('newOpInput');
+      const name = input.value.trim();
+      if (!name) return;
+      input.value = '';
+      sendCmd('op ' + name);
+      setTimeout(fetchPlayers, 800);
+    }
+
+    // ── Backups ──
+    async function fetchBackups() {
+      try {
+        const r = await fetch(API + '/api/backups');
+        const d = await r.json();
+        const el = document.getElementById('backupsList');
+        if (!d.backups || d.backups.length === 0) {
+          el.innerHTML = '<div style="padding:20px;color:var(--muted)">No backups created yet. Click above to create one!</div>';
+        } else {
+          el.innerHTML = d.backups.map(b => `
+            <div class="backup-item">
+              <div>
+                <div class="backup-name">📦 ${b.name}</div>
+                <div class="backup-date">${b.date} · ${b.size_mb} MB</div>
+              </div>
+              <div style="color:var(--green);font-size:12px;font-weight:700">Protected</div>
+            </div>
+          `).join('');
+        }
+      } catch(e) {}
+    }
+
+    async function triggerBackup() {
+      toast('💾 Creating full world backup...');
+      const r = await fetch(API + '/api/backup', {method: 'POST'});
+      const d = await r.json();
+      if (d.success) {
+        toast('✅ Backup completed: ' + d.filename);
+        fetchBackups();
+      } else {
+        toast('❌ Backup failed');
+      }
+    }
+
+    // ── Init Loop ──
+    fetchStatus();
+    setInterval(fetchStatus, 2500);
+    setInterval(fetchLogs, 2500);
+  </script>
+</body>
+</html>
