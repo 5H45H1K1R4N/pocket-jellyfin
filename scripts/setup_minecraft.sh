@@ -24,11 +24,11 @@ pkg install proot-distro tmux curl jq unzip tar -y
 
 # 3. Ensure PRoot Debian exists
 echo "[2/4] Verifying Debian Linux environment..."
-if ! proot-distro list | grep -q "debian (installed)"; then
+if [ -d "$PREFIX/var/lib/proot-distro/installed-rootfs/debian" ] || proot-distro list 2>/dev/null | grep -E -q '(\* debian|debian \(installed\))'; then
+    echo "  ✔ PRoot Debian is installed."
+else
     echo "  Installing Debian PRoot environment..."
     proot-distro install debian
-else
-    echo "  ✔ PRoot Debian is installed."
 fi
 
 # 4. Download and install the Minecraft CLI service
