@@ -252,7 +252,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 try:
                     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                         recent_logs = f.read()[-8000:]
-                        m = re.search(r'([a-zA-Z0-9\-]+\.gl\.joinmc\.link|[a-zA-Z0-9\-]+\.playit\.gg:\d+)', recent_logs)
+                        m = re.search(r'([a-zA-Z0-9\-.]+\.(?:ply\.gg|playit\.gg|joinmc\.link)(?::\d+)?)', recent_logs)
                         if m:
                             playit_ip = m.group(1)
                         m2 = re.search(r'(https://playit\.gg/claim/[a-zA-Z0-9\-_]+)', recent_logs)
