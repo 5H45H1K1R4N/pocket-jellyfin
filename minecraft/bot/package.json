@@ -1,12 +1,16 @@
 {
   "name": "peppy-mc-bot",
   "version": "1.0.0",
+  "description": "AI-powered Minecraft bot for PocketJellyfin",
+  "main": "src/index.js",
   "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js"
+  },
   "dependencies": {
     "mineflayer": "^4.26.0",
     "mineflayer-pathfinder": "^2.5.0",
     "mineflayer-collectblock": "^1.4.1",
-    "mineflayer-auto-eat": "^6.0.0",
     "dotenv": "^16.0.0"
   }
 }
