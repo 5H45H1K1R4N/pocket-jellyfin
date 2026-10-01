@@ -157,6 +157,8 @@ curl -fsSL https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/sc
 
 📖 *For full world migration instructions, plugin setup, and configuration details, read the [Minecraft Documentation](docs/MINECRAFT.md).*
 
+📖 *For the Peppy bot setup, permission model, supported commands, and limitations, read the [Minecraft Bot Guide](docs/PEPPY_BOT.md).*
+
 ---
 
 ## 📄 License

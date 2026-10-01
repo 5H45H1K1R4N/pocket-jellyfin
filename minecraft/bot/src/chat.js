@@ -1,6 +1,8 @@
 'use strict';
 
 const TRIGGERS = ['peppy', '@peppy', '!peppy'];
+const { validateTask } = require('./tasks/taskValidation');
+const { canExecute } = require('./security/permissions');
 
 const HELP_TEXT = [
   '=== 🤖 Peppy Commands ===',
@@ -76,9 +78,34 @@ class ChatHandler {
       return;
     }
 
-    // Direct conversational reply from Gemini
-    if (task.task === 'chat' && task.message) {
-      this.bot.chat(task.message);
+    if (task.task === 'chat') {
+      if (typeof task.message === 'string' && task.message.trim()) {
+        this.bot.chat(task.message.replace(/[\r\n\0]/g, ' ').slice(0, 160));
+      }
+      return;
+    }
+
+    try {
+      task = validateTask({ ...task, player: task.player || player });
+    } catch (error) {
+      this.bot.chat(`❓ ${error.message}`);
+      return;
+    }
+
+    if (!canExecute(task, player, this.queue.current)) {
+      this.bot.chat(`⛔ You do not have permission to ${task.task}, ${player}.`);
+      return;
+    }
+
+    if (task.task === 'cancel') {
+      const cancelled = this.queue.cancelCurrent();
+      this.bot.chat(cancelled ? '❌ Cancelling the current task.' : '📊 There is no active task to cancel.');
+      return;
+    }
+
+    if (task.task === 'stop') {
+      this.queue.stopCurrent();
+      this.bot.chat('🛑 Stopping current actions.');
       return;
     }
 
@@ -118,7 +145,7 @@ class ChatHandler {
     }
 
     // Enqueue operational tasks
-    this.queue.enqueue(task);
+    this.queue.enqueue({ ...task, requestedBy: player });
 
     const acks = {
       mine:   `⛏ On it! Mining ${task.amount || ''} ${task.target || 'blocks'} for ${player}.`,

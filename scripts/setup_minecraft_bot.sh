@@ -26,6 +26,10 @@ if ! command -v node >/dev/null 2>&1; then
 else
   echo "[1/5] Node.js $(node -v) already installed."
 fi
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "[*] Installing tmux..."
+  pkg install -y tmux
+fi
 
 # ── 2. Download bot source files from GitHub (no rsync, no git needed) ─────
 echo "[2/5] Downloading bot source from GitHub..."
@@ -39,10 +43,12 @@ mkdir -p \
 
 files=(
   "minecraft/bot/package.json"
+  "minecraft/bot/package-lock.json"
   "minecraft/bot/.env.example"
   "minecraft/bot/src/index.js"
   "minecraft/bot/src/bot.js"
   "minecraft/bot/src/chat.js"
+  "minecraft/bot/src/ai/geminiProvider.js"
   "minecraft/bot/src/ai/mockProvider.js"
   "minecraft/bot/src/ai/remoteProvider.js"
   "minecraft/bot/src/api/botServer.js"
@@ -50,7 +56,9 @@ files=(
   "minecraft/bot/src/skills/mining.js"
   "minecraft/bot/src/skills/farming.js"
   "minecraft/bot/src/skills/building.js"
+  "minecraft/bot/src/skills/combat.js"
   "minecraft/bot/src/tasks/taskQueue.js"
+  "minecraft/bot/src/tasks/taskValidation.js"
   "minecraft/bot/src/tasks/taskPlanner.js"
   "minecraft/bot/src/security/permissions.js"
 )

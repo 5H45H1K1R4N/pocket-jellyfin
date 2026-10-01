@@ -134,6 +134,15 @@ class BuildingSkill {
     // Origin = bot position offset slightly forward so we don't build on top of ourselves
     const origin = this.bot.entity.position.floored().offset(2, 0, 2);
 
+    const occupied = blueprint.find(entry => {
+      const target = this.bot.blockAt(new Vec3(origin.x + entry.x, origin.y + entry.y, origin.z + entry.z));
+      return !target || !['air', 'cave_air', 'void_air'].includes(target.name);
+    });
+    if (occupied) {
+      this.bot.chat('❌ The blueprint area is not clear. I will not replace existing blocks.');
+      return;
+    }
+
     // Count required blocks
     const needed = {};
     for (const entry of blueprint) {
@@ -172,9 +181,7 @@ class BuildingSkill {
         if (this._cancelled) break;
 
         // Equip the item
-        const item = this.bot.inventory.findInventoryItem(
-          i => i.name === entry.block, null
-        );
+        const item = this.bot.inventory.items().find(i => i.name === entry.block);
         if (!item) {
           this.bot.chat(`❌ Ran out of ${entry.block}!`);
           break;
@@ -192,15 +199,16 @@ class BuildingSkill {
         if (placed % 10 === 0 || placed === blueprint.length) {
           this.bot.chat(`🏗 ${placed}/${blueprint.length} blocks placed.`);
         }
-      } catch (e) {
-        // Position occupied or unreachable – skip
-      }
+      } catch (e) {}
     }
 
     if (this._cancelled) {
       this.bot.chat(`🏗 Cancelled. Placed ${placed}/${blueprint.length} blocks.`);
-    } else {
+    } else if (placed === blueprint.length) {
       this.bot.chat(`✅ ${key} complete! ${placed}/${blueprint.length} blocks placed.`);
+    } else {
+      this.bot.chat(`⚠️ ${key} incomplete: placed ${placed}/${blueprint.length} blocks.`);
+      throw new Error(`Blueprint incomplete: placed ${placed} of ${blueprint.length} blocks.`);
     }
   }
 

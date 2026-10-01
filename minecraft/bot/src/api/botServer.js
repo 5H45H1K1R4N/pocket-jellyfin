@@ -1,17 +1,17 @@
 const http = require('http');
 const url = require('url');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 /**
  * Lightweight HTTP API exposing bot telemetry and control.
  * Uses lazy getter for bot.bot so it's safe even before the bot connects.
  */
 class BotServer {
-  constructor(botInstance, taskQueue) {
+  constructor(botInstance, taskQueue, options = {}) {
     this.botInstance = botInstance; // Bot wrapper class
     this.taskQueue   = taskQueue;
-    this.port        = parseInt(process.env.BOT_HTTP_PORT, 10) || 8089;
+    this.port        = options.port ?? (parseInt(process.env.BOT_HTTP_PORT, 10) || 8089);
+    this.host        = options.host || process.env.BOT_HTTP_HOST || '127.0.0.1';
+    this.maxBodyBytes = 8192;
   }
 
   // Resolve mineflayer bot lazily – safe even when bot hasn't connected yet
@@ -22,12 +22,6 @@ class BotServer {
       const parsed  = url.parse(req.url, true);
       const method  = req.method.toUpperCase();
       const pathname = parsed.pathname;
-
-      // CORS headers for dashboard fetches
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-      if (method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
       try {
         if (pathname === '/api/bot/status' && method === 'GET') {
@@ -58,12 +52,32 @@ class BotServer {
 
         if (pathname === '/api/bot/command' && method === 'POST') {
           let body = '';
-          req.on('data', chunk => (body += chunk));
+          let tooLarge = false;
+          req.on('data', chunk => {
+            if (body.length + chunk.length > this.maxBodyBytes) {
+              tooLarge = true;
+              body = '';
+              return;
+            }
+            if (!tooLarge) body += chunk;
+          });
           req.on('end', () => {
+            if (tooLarge) return this._json(res, { success: false, error: 'Request body too large.' }, 413);
             try {
               const task = JSON.parse(body);
-              this.taskQueue.enqueue(task);
-              this._json(res, { success: true });
+              if (!this.bot) {
+                return this._json(res, { success: false, error: 'Bot is offline.' }, 503);
+              }
+              if (task.task === 'cancel') {
+                const cancelled = this.taskQueue.cancelCurrent();
+                return this._json(res, { success: cancelled, error: cancelled ? undefined : 'No active task.' }, cancelled ? 200 : 409);
+              }
+              if (task.task === 'stop') {
+                this.taskQueue.stopCurrent();
+                return this._json(res, { success: true });
+              }
+              const accepted = this.taskQueue.enqueue(task);
+              this._json(res, { success: true, id: accepted.id, state: accepted._state });
             } catch (e) {
               this._json(res, { success: false, error: e.message }, 400);
             }
@@ -83,13 +97,15 @@ class BotServer {
       }
     });
 
-    server.listen(this.port, '0.0.0.0', () => {
-      console.log(`[Bot API] Listening on port ${this.port}`);
+    this.server = server;
+    server.listen(this.port, this.host, () => {
+      console.log(`[Bot API] Listening on ${this.host}:${server.address().port}`);
     });
 
     server.on('error', err => {
       console.error('[Bot API] Server error:', err.message);
     });
+    return server;
   }
 
   _json(res, obj, status = 200) {

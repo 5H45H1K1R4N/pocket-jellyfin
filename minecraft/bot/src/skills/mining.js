@@ -1,7 +1,5 @@
 'use strict';
 
-const { GoalNear } = require('mineflayer-pathfinder').goals;
-
 /**
  * MiningSkill – handles mining and resource gathering.
  * Includes auto-tool equipping logic (best pickaxe/axe/shovel in inventory)
@@ -15,7 +13,12 @@ class MiningSkill {
 
   get bot() { return this.botInstance.bot; }
 
-  cancel() { this._cancelled = true; }
+  cancel() {
+    this._cancelled = true;
+    if (this.bot && this.bot.collectBlock && typeof this.bot.collectBlock.cancelTask === 'function') {
+      this.bot.collectBlock.cancelTask();
+    }
+  }
 
   async mine(task) {
     const { target, amount, player } = task;
@@ -48,22 +51,22 @@ class MiningSkill {
 
       failStreak = 0;
       try {
-        this.bot.pathfinder.setGoal(
-          new GoalNear(block.position.x, block.position.y, block.position.z, 2)
-        );
-        await this._waitForProximity(block.position, 2.5, 15000);
-        if (this._cancelled) break;
-
         // Equip the best available tool for this block before digging
         await this._equipBestTool(block);
+        if (this._cancelled) break;
 
-        await this.bot.dig(block);
+        await this.bot.collectBlock.collect(block);
+        failStreak = 0;
         collected++;
         if (collected % 8 === 0 || collected === amount) {
           this.bot.chat(`⛏ ${collected}/${amount} ${target}`);
         }
       } catch (e) {
-        // block broken by another player or path obstructed – retry
+        failStreak++;
+        if (failStreak >= 3) {
+          this.bot.chat(`⚠️ Unable to reach or collect ${target}; stopping safely.`);
+          break;
+        }
       }
     }
 
@@ -112,29 +115,6 @@ class MiningSkill {
         await this.bot.equip(bestItem, 'hand');
       }
     } catch (_) {}
-  }
-
-  _waitForProximity(pos, maxDist = 2.5, timeoutMs = 15000) {
-    return new Promise(resolve => {
-      const t = setTimeout(resolve, timeoutMs);
-      const check = () => {
-        if (!this.bot || !this.bot.entity) {
-          clearTimeout(t);
-          return resolve();
-        }
-        if (this.bot.entity.position.distanceTo(pos) <= maxDist) {
-          clearTimeout(t);
-          return resolve();
-        }
-        if (!this._cancelled) {
-          setTimeout(check, 200);
-        } else {
-          clearTimeout(t);
-          resolve();
-        }
-      };
-      check();
-    });
   }
 
   _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

@@ -5,12 +5,14 @@
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "node --test"
   },
   "dependencies": {
     "mineflayer": "^4.39.0",
     "mineflayer-pathfinder": "^2.4.5",
     "mineflayer-collectblock": "^1.6.0",
+    "vec3": "^0.2.0",
     "dotenv": "^16.0.0"
   }
 }

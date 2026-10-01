@@ -13,6 +13,9 @@ class TaskPlanner {
     this.combat   = new (require('../skills/combat'))(botInstance);
 
     this._currentSkill = null;
+    this.queue.on('cancelRequested', request => this._cancelTask(request));
+    this.queue.on('stopRequested', () => this._stopActions());
+    this.botInstance.on('disconnected', () => this.queue.cancelCurrent('disconnect'));
   }
 
   get bot() { return this.botInstance.bot; }
@@ -23,6 +26,8 @@ class TaskPlanner {
       this.queue.finishCurrent('FAILED');
       return;
     }
+
+    if (!this.queue.markRunning(task)) return;
 
     this._currentSkill = null;
 
@@ -74,10 +79,6 @@ class TaskPlanner {
           this.queue.cancelCurrent();
           return; // cancelCurrent manages state; skip finishCurrent
 
-        case 'craft':
-          this.bot.chat('🔨 Crafting coming soon!');
-          break;
-
         // Inline tasks – handled by chat.js; should not reach here
         case 'help':
         case 'health':
@@ -89,12 +90,29 @@ class TaskPlanner {
           this.bot.chat(`❓ Unknown task: ${task.task}`);
       }
 
-      this.queue.finishCurrent('COMPLETED');
+      this.queue.finishCurrent(task._cancelRequested ? 'CANCELLED' : 'COMPLETED');
     } catch (err) {
       console.error('[Planner] Task error:', err.message || err);
       try { this.bot.chat('🚨 Task error – check bot console.'); } catch (_) {}
-      this.queue.finishCurrent('FAILED');
+      this.queue.finishCurrent(task._cancelRequested ? 'CANCELLED' : 'FAILED');
     }
+  }
+
+  _cancelTask({ task, reason }) {
+    if (this._currentSkill && typeof this._currentSkill.cancel === 'function') {
+      this._currentSkill.cancel();
+    }
+    if (this.bot && this.bot.pathfinder) this.bot.pathfinder.stop();
+    if (reason === 'stop') this._stopActions();
+  }
+
+  _stopActions() {
+    if (this._currentSkill && typeof this._currentSkill.cancel === 'function') {
+      this._currentSkill.cancel();
+    }
+    if (this.bot && this.bot.pathfinder) this.bot.pathfinder.stop();
+    this.movement.cancel();
+    if (this.bot) this.combat.stopDefending();
   }
 }
 
