@@ -2,7 +2,7 @@
 """
 PocketJellyfin - Aternos-Style Minecraft Web Dashboard
 Zero-dependency Python 3 HTTP Server
-Provides live status, interactive console, options, player management, and backups.
+Provides live status, interactive console, options, player management, backups, and Peppy bot control.
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -14,10 +14,12 @@ import socket
 import struct
 import time
 import re
+import urllib.request
 
 PORT = 8088
 MC_DIR = "/storage/26B2-1AEB/Minecraft"
 TMUX_SESSION = "minecraft"
+BOT_API = "http://127.0.0.1:8089"   # Peppy bot HTTP API
 
 # Detect fallback if not on SD card
 if not os.path.exists(MC_DIR):
@@ -87,6 +89,18 @@ def resolve_mc_path(*subpaths):
     if os.path.exists(candidate3):
         return candidate3
     return candidate1
+
+def proxy_bot(path, method="GET", body=None):
+    """Forward a request to the Peppy bot API and return (status, data)."""
+    try:
+        url = BOT_API + path
+        req = urllib.request.Request(url, method=method)
+        req.add_header("Content-Type", "application/json")
+        data = body.encode() if body else None
+        with urllib.request.urlopen(req, data=data, timeout=2) as resp:
+            return resp.status, json.loads(resp.read())
+    except Exception as e:
+        return 503, {"error": "Bot API unavailable", "detail": str(e)}
 
 def get_server_properties():
     props_path = resolve_mc_path("server.properties")
@@ -167,7 +181,6 @@ def get_disk_info(path):
 
 def get_process_memory():
     try:
-        # Check java process rss memory
         r = subprocess.run(["pgrep", "-f", "paper.jar"], stdout=subprocess.PIPE, text=True)
         pids = r.stdout.strip().split()
         if pids:
@@ -240,11 +253,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             disk = get_disk_info(MC_DIR)
             rss_mb = get_process_memory() if running else 0
             
-            # Check backups
             backups_dir = resolve_mc_path("backups")
             backup_count = len(os.listdir(backups_dir)) if os.path.exists(backups_dir) else 0
 
-            # Public playit IP or Claim URL detection from log if active
             playit_ip = None
             playit_claim_url = None
             log_path = resolve_mc_path("logs", "latest.log")
@@ -261,7 +272,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 except Exception:
                     pass
 
-            # Installed plugins list
             plugins_list = []
             pdir = resolve_mc_path("plugins")
             if os.path.exists(pdir):
@@ -315,7 +325,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return
 
         elif parsed.path == "/api/players":
-            # Read ops.json, whitelist.json, banned-players.json, usercache.json
             def read_json_file(filename):
                 p = resolve_mc_path(filename)
                 if os.path.exists(p):
@@ -353,6 +362,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
                             "date": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(st.st_mtime))
                         })
             self.send_json({"backups": backups})
+            return
+
+        # ── Bot API proxy routes ──────────────────────────────────────────
+        elif parsed.path in ("/api/bot/status", "/api/bot/task", "/api/bot/inventory"):
+            bot_path = parsed.path  # same path on bot server
+            status, data = proxy_bot(bot_path)
+            self.send_json(data, status=200)  # always 200 to dashboard; error info in data
             return
 
         self.send_error(404)
@@ -413,7 +429,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
             tar_name = f"mc_backup_{timestamp}_{tag}.tar.gz"
             tar_path = os.path.join(bdir, tar_name)
             
-            # Send save-all flush if online
             if is_server_running():
                 subprocess.run(["tmux", "send-keys", "-t", TMUX_SESSION, "save-all flush", "Enter"])
                 time.sleep(2)
@@ -434,7 +449,16 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_json({"success": True, "filename": tar_name})
             return
 
+        # ── Bot command proxy ─────────────────────────────────────────────
+        elif parsed.path == "/api/bot/command":
+            status, data = proxy_bot("/api/bot/command", method="POST", body=body)
+            self.send_json(data, status=200)
+            return
+
         self.send_error(404)
+
+    def log_message(self, format, *args):
+        pass  # suppress request logs for cleaner output
 
 def run():
     server_address = ("0.0.0.0", PORT)
@@ -442,6 +466,7 @@ def run():
     print(f"============================================================")
     print(f"  PocketJellyfin - Minecraft Aternos-Style Web Dashboard    ")
     print(f"  Live at: http://0.0.0.0:{PORT}                             ")
+    print(f"  Bot API proxied from: {BOT_API}                            ")
     print(f"============================================================")
     try:
         httpd.serve_forever()

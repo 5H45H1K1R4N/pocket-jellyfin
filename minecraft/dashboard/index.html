@@ -321,6 +321,9 @@
       <button class="nav-btn" onclick="switchTab('backups', this)">
         <span class="icon">💾</span>Backups
       </button>
+      <button class="nav-btn" onclick="switchTab('bot', this)">
+        <span class="icon">🤖</span>Peppy Bot
+      </button>
     </nav>
     <div class="sidebar-footer">
       <div>Running on Android Phone</div>
@@ -578,6 +581,119 @@
         </div>
       </section>
 
+      <!-- ────────── TAB: BOT ────────── -->
+      <section class="tab-pane" id="tab-bot">
+
+        <!-- Bot Status Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🤖 Peppy Bot Status</div>
+            <div id="botStatusBadge" class="status-badge offline"><span class="pulse-dot"></span><span id="botStatusText">OFFLINE</span></div>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px,1fr));">
+              <div class="stat-box">
+                <div class="stat-label">❤️ Health</div>
+                <div class="stat-val" id="botHealth" style="color:var(--red)">--</div>
+                <div class="progress-track"><div class="progress-fill" id="botHealthBar" style="width:0%;background:var(--red)"></div></div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">🍗 Food</div>
+                <div class="stat-val" id="botFood" style="color:var(--yellow)">--</div>
+                <div class="progress-track"><div class="progress-fill" id="botFoodBar" style="width:0%;background:var(--yellow)"></div></div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">📍 Position</div>
+                <div style="font-family:monospace;font-size:12px;margin-top:4px;color:#38bdf8" id="botPosition">--</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">🌍 Dimension</div>
+                <div style="font-family:monospace;font-size:13px;margin-top:4px;font-weight:700" id="botDimension">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚡ Quick Commands</div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+              <button class="btn-power btn-start" style="padding:10px 18px;font-size:13px" onclick="botTask({task:'status',player:'dashboard'})">📊 Status</button>
+              <button class="btn-power btn-restart" style="padding:10px 18px;font-size:13px" onclick="botTask({task:'stop',player:'dashboard'})">🛑 Stop Moving</button>
+              <button class="btn-power btn-stop" style="padding:10px 18px;font-size:13px" onclick="botTask({task:'cancel',player:'dashboard'})">❌ Cancel Task</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+              <!-- Mine -->
+              <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:10px;">⛏ Mine Resources</div>
+                <select id="mineTarget" class="select-input" style="width:100%;margin-bottom:8px;">
+                  <option value="stone">Stone</option>
+                  <option value="coal_ore">Coal Ore</option>
+                  <option value="iron_ore">Iron Ore</option>
+                  <option value="gold_ore">Gold Ore</option>
+                  <option value="diamond_ore">Diamond Ore</option>
+                  <option value="cobblestone">Cobblestone</option>
+                  <option value="oak_log">Oak Log</option>
+                  <option value="gravel">Gravel</option>
+                </select>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="number" id="mineAmount" class="text-input" value="32" min="1" max="256" style="width:80px;">
+                  <button class="btn-power btn-start" style="flex:1;padding:8px 12px;font-size:12px" onclick="sendMineTask()">⛏ Start Mining</button>
+                </div>
+              </div>
+              <!-- Farm -->
+              <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:10px;">🌾 Farming</div>
+                <select id="farmCrop" class="select-input" style="width:100%;margin-bottom:8px;">
+                  <option value="wheat">Wheat</option>
+                  <option value="carrots">Carrots</option>
+                  <option value="potatoes">Potatoes</option>
+                  <option value="beetroot">Beetroot</option>
+                  <option value="sugar_cane">Sugar Cane</option>
+                </select>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn-power btn-start" style="flex:1;padding:8px 12px;font-size:12px" onclick="botTask({task:'farm',action:'harvest',crop:document.getElementById('farmCrop').value,player:'dashboard'})">🌾 Harvest</button>
+                  <button class="btn-power btn-restart" style="flex:1;padding:8px 12px;font-size:12px" onclick="botTask({task:'farm',action:'plant',crop:document.getElementById('farmCrop').value,player:'dashboard'})">🌱 Plant</button>
+                </div>
+              </div>
+              <!-- Follow / Come -->
+              <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:10px;">🚶 Movement</div>
+                <input type="text" id="movePlayer" class="text-input" placeholder="Player name..." style="width:100%;margin-bottom:8px;">
+                <div style="display:flex;gap:6px;">
+                  <button class="btn-power btn-start" style="flex:1;padding:8px 10px;font-size:12px" onclick="botTask({task:'follow',player:document.getElementById('movePlayer').value||'Steve'})">👣 Follow</button>
+                  <button class="btn-power btn-restart" style="flex:1;padding:8px 10px;font-size:12px" onclick="botTask({task:'come',player:document.getElementById('movePlayer').value||'Steve'})">🏃 Come</button>
+                </div>
+              </div>
+              <!-- Custom JSON -->
+              <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:10px;">🔧 Custom Task (JSON)</div>
+                <textarea id="customTask" style="width:100%;height:72px;background:#0b0c10;border:1px solid var(--border);color:white;border-radius:8px;padding:8px;font-family:monospace;font-size:12px;resize:none;" placeholder='{"task":"mine","target":"iron_ore","amount":16,"player":"you"}'></textarea>
+                <button class="btn-power btn-start" style="width:100%;margin-top:8px;padding:8px;font-size:12px" onclick="sendCustomTask()">▶ Send Task</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Queue Card -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Task Queue</div><button class="btn-copy" onclick="fetchBotTask()">↻ Refresh</button></div>
+          <div class="card-body" id="botTaskPanel">
+            <div style="color:var(--muted);font-size:13px;">Loading task info...</div>
+          </div>
+        </div>
+
+        <!-- Inventory Card -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎒 Inventory</div><button class="btn-copy" onclick="fetchBotInventory()">↻ Refresh</button></div>
+          <div class="card-body" id="botInventoryPanel" style="display:flex;flex-wrap:wrap;gap:8px;">
+            <div style="color:var(--muted);font-size:13px;">Loading inventory...</div>
+          </div>
+        </div>
+
+      </section>
+
     </main>
   </div>
 
@@ -599,7 +715,8 @@
         console: 'Live Server Console',
         options: 'Server Configuration',
         players: 'Player & Permissions',
-        backups: 'World Backups'
+        backups: 'World Backups',
+        bot: '🤖 Peppy Bot Control'
       };
       document.getElementById('pageTitle').textContent = titles[name] || 'PocketMC';
 
@@ -607,6 +724,7 @@
       if (name === 'options') fetchOptions();
       if (name === 'players') fetchPlayers();
       if (name === 'backups') fetchBackups();
+      if (name === 'bot') { fetchBotStatus(); fetchBotTask(); fetchBotInventory(); }
     }
 
     function toast(msg) {
@@ -843,6 +961,110 @@
       } else {
         toast('❌ Backup failed');
       }
+    }
+
+    // ── Bot Control ──
+    async function fetchBotStatus() {
+      try {
+        const r = await fetch(API + '/api/bot/status');
+        const d = await r.json();
+        if (d.error) {
+          document.getElementById('botStatusBadge').className = 'status-badge offline';
+          document.getElementById('botStatusText').textContent = 'OFFLINE';
+          return;
+        }
+        document.getElementById('botStatusBadge').className = 'status-badge online';
+        document.getElementById('botStatusText').textContent = 'ONLINE';
+        const hp = Math.round((d.health / 20) * 100);
+        const food = Math.round((d.food / 20) * 100);
+        document.getElementById('botHealth').textContent = d.health ?? '--';
+        document.getElementById('botHealthBar').style.width = hp + '%';
+        document.getElementById('botFood').textContent = d.food ?? '--';
+        document.getElementById('botFoodBar').style.width = food + '%';
+        if (d.position) {
+          const p = d.position;
+          document.getElementById('botPosition').textContent = `X:${Math.round(p.x)} Y:${Math.round(p.y)} Z:${Math.round(p.z)}`;
+        }
+        document.getElementById('botDimension').textContent = d.dimension || 'overworld';
+      } catch(e) {
+        document.getElementById('botStatusBadge').className = 'status-badge offline';
+        document.getElementById('botStatusText').textContent = 'OFFLINE';
+      }
+    }
+
+    async function fetchBotTask() {
+      try {
+        const r = await fetch(API + '/api/bot/task');
+        const d = await r.json();
+        const el = document.getElementById('botTaskPanel');
+        if (d.error) { el.innerHTML = '<div style="color:var(--muted)">Bot offline</div>'; return; }
+        const stateColor = { RUNNING:'var(--green)', PLANNING:'var(--yellow)', FAILED:'var(--red)', CANCELLED:'var(--red)', COMPLETED:'var(--green)', QUEUED:'var(--blue)' };
+        let html = '';
+        if (d.current) {
+          const col = stateColor[d.current._state] || 'var(--muted)';
+          html += `<div style="padding:12px;background:var(--sidebar);border-radius:10px;border:1px solid var(--border);margin-bottom:10px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">▶ Current Task</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-family:monospace;font-size:14px;font-weight:700">${d.current.task}</span>
+              <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,0.3);color:${col}">${d.current._state}</span>
+            </div>
+            ${d.current.target ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">Target: ${d.current.target} × ${d.current.amount||''}</div>` : ''}
+          </div>`;
+        } else {
+          html += '<div style="color:var(--muted);font-size:13px;margin-bottom:8px;">No active task.</div>';
+        }
+        if (d.pending && d.pending.length > 0) {
+          html += '<div style="font-weight:700;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Queue</div>';
+          html += d.pending.map((t,i) => `<div style="padding:8px 12px;background:var(--sidebar);border-radius:8px;margin-bottom:4px;font-size:13px;border:1px solid var(--border)">${i+1}. ${t.task} <span style="color:var(--muted);font-size:11px">${t._state}</span></div>`).join('');
+        }
+        el.innerHTML = html || '<div style="color:var(--muted)">Queue is empty.</div>';
+      } catch(e) {}
+    }
+
+    async function fetchBotInventory() {
+      try {
+        const r = await fetch(API + '/api/bot/inventory');
+        const items = await r.json();
+        const el = document.getElementById('botInventoryPanel');
+        if (!Array.isArray(items) || items.length === 0) {
+          el.innerHTML = '<div style="color:var(--muted);font-size:13px">Inventory is empty or bot is offline.</div>';
+          return;
+        }
+        el.innerHTML = items.map(item => `
+          <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:120px;text-align:center;">
+            <div style="font-weight:700;font-size:13px">${item.name}</div>
+            <div style="font-size:20px;font-weight:800;color:var(--blue)">×${item.count}</div>
+            <div style="font-size:10px;color:var(--muted)">slot ${item.slot}</div>
+          </div>`).join('');
+      } catch(e) {}
+    }
+
+    async function botTask(task) {
+      toast(`📤 Sending: ${task.task}...`);
+      try {
+        const r = await fetch(API + '/api/bot/command', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(task)
+        });
+        const d = await r.json();
+        if (d.success) { toast(`✅ Task queued: ${task.task}`); fetchBotTask(); }
+        else toast(`❌ Failed: ${d.error || 'unknown error'}`);
+      } catch(e) { toast('❌ Bot API unreachable'); }
+    }
+
+    function sendMineTask() {
+      const target = document.getElementById('mineTarget').value;
+      const amount = parseInt(document.getElementById('mineAmount').value) || 32;
+      botTask({task:'mine', target, amount, player:'dashboard'});
+    }
+
+    function sendCustomTask() {
+      const raw = document.getElementById('customTask').value.trim();
+      try {
+        const task = JSON.parse(raw);
+        botTask(task);
+      } catch(e) { toast('❌ Invalid JSON in custom task'); }
     }
 
     // ── Init Loop ──
