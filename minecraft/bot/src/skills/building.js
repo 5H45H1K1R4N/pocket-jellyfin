@@ -1,23 +1,22 @@
 /**
- * Building skill – executes predefined blueprints.
- * Expected task shape: { task: 'build', structure: '<name>', origin: {x,y,z}, player: '<username>' }
- * For now this is a stub that acknowledges the request.
+ * Building skill – predefined blueprint placement.
+ * Lazy getter so bot.bot is resolved at call time, not construction time.
  */
 class BuildingSkill {
   constructor(botInstance) {
-    this.bot = botInstance.bot;
+    this.botInstance = botInstance;
   }
 
+  get bot() { return this.botInstance.bot; }
+
   async build(task) {
-    const { structure, origin, player } = task;
+    const { structure, player } = task;
     if (!structure) {
       this.bot.chat('❓ Build command missing structure name.');
       return;
     }
-    this.bot.chat(`🏗️ Building ${structure} for ${player} (stub).`);
-    // Real implementation would load a JSON blueprint from ./blueprints/<structure>.json
-    // and place blocks relative to origin using bot.placeBlock.
-    this.bot.chat('✅ Build task completed (stub).');
+    this.bot.chat(`🏗️ Building ${structure} for ${player} (stub – full building coming soon)`);
+    this.bot.chat('✅ Build task acknowledged.');
   }
 }
 

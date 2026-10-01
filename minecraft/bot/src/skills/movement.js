@@ -1,42 +1,40 @@
-const { GoalNear, goals } = require('mineflayer-pathfinder').goals;
 /**
- * Movement skill set for Peppy.
- * Provides simple high‑level actions: follow a player, come to the player, and stop.
+ * Movement skill – follow, come, stop.
+ * Uses lazy getter so bot.bot can be null at construction time.
  */
 class MovementSkill {
-  constructor(bot) {
-    this.bot = bot;
-    this.pathfinder = bot.pathfinder;
+  constructor(botInstance) {
+    this.botInstance = botInstance;
   }
 
-  /** Follow the specified player (by username). */
+  get bot() { return this.botInstance.bot; }
+
   async follow(playerName) {
+    const { GoalFollow } = require('mineflayer-pathfinder').goals;
     const target = this.bot.players[playerName];
-    if (!target) {
-      this.bot.chat(`❓ I can't see player ${playerName}.`);
+    if (!target || !target.entity) {
+      this.bot.chat(`❓ Can't see ${playerName} right now.`);
       return;
     }
-    const followGoal = new GoalNear(target.entity.position.x, target.entity.position.y, target.entity.position.z, 2);
-    this.pathfinder.setGoal(followGoal);
+    this.bot.pathfinder.setGoal(new GoalFollow(target.entity, 2), true);
     this.bot.chat(`👣 Following ${playerName}`);
   }
 
-  /** Come to the issuing player's position. */
   async come(playerName) {
+    const { GoalNear } = require('mineflayer-pathfinder').goals;
     const target = this.bot.players[playerName];
-    if (!target) {
-      this.bot.chat(`❓ I can't find ${playerName}.`);
+    if (!target || !target.entity) {
+      this.bot.chat(`❓ Can't find ${playerName}.`);
       return;
     }
-    const goal = new GoalNear(target.entity.position.x, target.entity.position.y, target.entity.position.z, 1);
-    this.pathfinder.setGoal(goal);
+    const { x, y, z } = target.entity.position;
+    this.bot.pathfinder.setGoal(new GoalNear(x, y, z, 1));
     this.bot.chat(`🏃 Coming to ${playerName}`);
   }
 
-  /** Stop all current pathfinding movement. */
   stop() {
-    this.pathfinder.stop();
-    this.bot.chat('🛑 Stopping movement');
+    this.bot.pathfinder.stop();
+    this.bot.chat('🛑 Stopped.');
   }
 }
 

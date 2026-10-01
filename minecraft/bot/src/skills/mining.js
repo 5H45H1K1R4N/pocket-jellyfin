@@ -1,22 +1,15 @@
-const { Vec3 } = require('vec3');
 const { GoalNear } = require('mineflayer-pathfinder').goals;
+
 /**
  * Mining skill – handles "mine" tasks.
- * Expected task shape: { task: 'mine', target: '<block_name>', amount: <int>, player: '<username>' }
- * Uses mineflayer-collectblock to locate and collect the desired block type.
- * Progress is reported via chat messages.
+ * NOTE: bot.bot must be non-null before calling mine().
  */
 class MiningSkill {
   constructor(botInstance) {
-    this.bot = botInstance.bot;
-    this.pathfinder = this.bot.pathfinder;
-    // Ensure the collectBlock plugin is loaded
-    try {
-      this.bot.loadPlugin(require('mineflayer-collectblock').plugin);
-    } catch (e) {
-      // plugin may already be loaded; ignore errors
-    }
+    this.botInstance = botInstance; // store the Bot wrapper, NOT bot.bot
   }
+
+  get bot() { return this.botInstance.bot; } // resolve lazily
 
   async mine(task) {
     const { target, amount, player } = task;
@@ -24,47 +17,45 @@ class MiningSkill {
       this.bot.chat('❓ Missing target or amount for mining task.');
       return;
     }
-    this.bot.chat(`⛏ Starting mining ${amount} × ${target} for ${player}`);
+
+    this.bot.chat(`⛏ Mining ${amount} × ${target} for ${player}`);
     let collected = 0;
-    const startTime = Date.now();
 
     while (collected < amount) {
-      // Find the nearest block of the requested type
       const block = this.bot.findBlock({
-        matching: block => block.name === target,
+        matching: b => b.name === target,
         maxDistance: 64,
-        count: 1,
       });
+
       if (!block) {
-        this.bot.chat(`⚠️ No more ${target} blocks within range. Stopping.`);
+        this.bot.chat(`⚠️ No ${target} found within 64 blocks. Stopping.`);
         break;
       }
-      // Move near the block
+
+      // Navigate to block
       const goal = new GoalNear(block.position.x, block.position.y, block.position.z, 1);
-      this.pathfinder.setGoal(goal);
-      // Wait until we are close enough (simple poll)
+      this.bot.pathfinder.setGoal(goal);
       await this._waitForProximity(block.position);
-      // Collect the block
+
       try {
         await this.bot.collectBlock.collect(block);
         collected += 1;
-        this.bot.chat(`📦 Collected ${collected}/${amount} ${target}`);
+        if (collected % 8 === 0 || collected === amount) {
+          this.bot.chat(`📦 ${collected}/${amount} ${target}`);
+        }
       } catch (e) {
-        this.bot.chat(`❗ Failed to collect block: ${e.message}`);
-        // Skip this block and continue searching
+        // block may have moved or been broken by someone else — skip it
       }
     }
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    this.bot.chat(`✅ Mining task finished. ${collected}/${amount} ${target} collected in ${elapsed}s.`);
+
+    this.bot.chat(`✅ Done. ${collected}/${amount} ${target} collected.`);
   }
 
-  /** Simple promise that resolves when bot is within 2 blocks of target */
   _waitForProximity(pos) {
     return new Promise(resolve => {
       const check = () => {
-        const distance = this.bot.entity.position.distanceTo(pos);
-        if (distance < 2) return resolve();
-        setTimeout(check, 500);
+        if (this.bot.entity.position.distanceTo(pos) < 2) return resolve();
+        setTimeout(check, 300);
       };
       check();
     });

@@ -1,61 +1,50 @@
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
-
 /**
- * TaskPlanner – interprets a task object from the queue and dispatches
- * to the appropriate skill module.
- * Currently supports: mine, follow, come, stop, farm, build, cancel, status.
+ * TaskPlanner – routes tasks to skill modules.
+ * Skills are instantiated with the Bot wrapper (not bot.bot directly),
+ * so they use lazy getters and are safe to create before the bot connects.
  */
 class TaskPlanner {
   constructor(botInstance, taskQueue) {
-    this.bot = botInstance.bot; // underlying mineflayer bot
-    this.botInstance = botInstance; // reference to Bot class for events
+    this.botInstance = botInstance;
     this.queue = taskQueue;
-    // Lazy‑load skill modules
-    this.movement = new (require('../skills/movement'))(botInstance);
-    this.mining = new (require('../skills/mining'))(botInstance);
-    this.farming = new (require('../skills/farming'))(botInstance);
-    this.building = new (require('../skills/building'))(botInstance);
+
+    // Pass botInstance (the wrapper), NOT botInstance.bot
+    // Each skill uses a lazy `get bot()` getter to resolve bot.bot at runtime
+    this.movement  = new (require('../skills/movement'))(botInstance);
+    this.mining    = new (require('../skills/mining'))(botInstance);
+    this.farming   = new (require('../skills/farming'))(botInstance);
+    this.building  = new (require('../skills/building'))(botInstance);
   }
 
+  get bot() { return this.botInstance.bot; }
+
   async handleTask(task) {
+    if (!this.bot) {
+      console.warn('[Planner] Bot not connected yet, skipping task:', task.task);
+      this.queue.finishCurrent('FAILED');
+      return;
+    }
+
     try {
-      this.bot.chat(`⚙️ Executing ${task.task}…`);
+      this.bot.chat(`⚙️ Starting: ${task.task}`);
+
       switch (task.task) {
-        case 'follow':
-          await this.movement.follow(task.player);
-          break;
-        case 'come':
-          await this.movement.come(task.player);
-          break;
-        case 'stop':
-          this.movement.stop();
-          break;
-        case 'mine':
-          await this.mining.mine(task);
-          break;
-        case 'farm':
-          await this.farming.farm(task);
-          break;
-        case 'build':
-          await this.building.build(task);
-          break;
-        case 'cancel':
-          this.queue.cancelCurrent();
-          break;
-        case 'status':
-          // Will be served via API; just ack in chat
-          this.bot.chat('📊 Current status requested – check dashboard.');
-          break;
-        default:
-          this.bot.chat(`❓ Unknown task: ${task.task}`);
+        case 'follow':  await this.movement.follow(task.player); break;
+        case 'come':    await this.movement.come(task.player);   break;
+        case 'stop':    this.movement.stop();                    break;
+        case 'mine':    await this.mining.mine(task);            break;
+        case 'farm':    await this.farming.farm(task);           break;
+        case 'build':   await this.building.build(task);         break;
+        case 'cancel':  this.queue.cancelCurrent(); return;
+        case 'status':  this.bot.chat('📊 Check the dashboard at :8089'); break;
+        default:        this.bot.chat(`❓ Unknown task: ${task.task}`);
       }
-      // Mark as completed unless cancelled or failed inside skill
+
       if (task._state !== 'CANCELLED' && task._state !== 'FAILED') {
         this.queue.finishCurrent('COMPLETED');
       }
     } catch (err) {
-      this.bot.chat('🚨 Task failed – see console');
+      this.bot.chat('🚨 Task failed – check bot console.');
       this.botInstance.emit('error', err);
       this.queue.finishCurrent('FAILED');
     }
