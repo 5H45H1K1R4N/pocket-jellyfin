@@ -1,52 +1,97 @@
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+'use strict';
 
 /**
- * MockProvider – lightweight rule‑based parser (offline).
- * Recognises a limited set of commands the bot can understand without an LLM.
- * Returns a task object compatible with the TaskQueue schema.
+ * MockProvider — fully offline command parser for Peppy.
+ * Returns a task object or null if nothing matches.
  */
-class MockProvider {
-  constructor() {
-    // simple regex patterns for supported commands
-    this.patterns = [
-      { regex: /mine\s+(\d+)\s+(.*)/i, task: 'mine' },
-      { regex: /follow\s+me/i, task: 'follow' },
-      { regex: /come\s+to\s+me/i, task: 'come' },
-      { regex: /stop/i, task: 'stop' },
-      { regex: /cancel/i, task: 'cancel' },
-      { regex: /status/i, task: 'status' },
-      { regex: /harvest\s+(.*)/i, task: 'farm', action: 'harvest' },
-      { regex: /plant\s+(.*)/i, task: 'farm', action: 'plant' },
-      { regex: /build\s+(.*)/i, task: 'build' },
-    ];
-  }
 
+function normalizeBlock(str) {
+  return str.trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function normalizeCrop(str) {
+  return normalizeBlock(str).replace('sugar_cane', 'sugarcane');
+}
+
+class MockProvider {
   /**
-   * Parse a raw command string from chat.
-   * @param {string} command – the message after the trigger word.
-   * @param {string} username – player who issued the command (used as "owner" for permission checks).
-   * @returns {object|null} task object or null if not recognised.
+   * Parse a raw chat command into a task descriptor.
+   * @param {string} message - The command text (after trigger word removed)
+   * @param {string} playerName - The username who sent it
+   * @returns {object|null}
    */
-  parseCommand(command, username) {
-    const trimmed = command.trim();
-    for (const p of this.patterns) {
-      const m = trimmed.match(p.regex);
-      if (m) {
-        const task = { task: p.task, player: username };
-        if (p.task === 'mine') {
-          task.amount = parseInt(m[1], 10);
-          task.target = m[2];
-        } else if (p.task === 'farm') {
-          task.action = p.action;
-          task.crop = m[1];
-        } else if (p.task === 'build') {
-          task.structure = m[1];
-        }
-        return task;
-      }
+  parseCommand(message, playerName) {
+    const player = playerName;
+    let m;
+
+    // 1. mine / dig / collect <n> <block>
+    m = message.match(/^(mine|dig|collect)\s+(\d+)\s+(.+)/i);
+    if (m) return { task: 'mine', target: normalizeBlock(m[3]), amount: parseInt(m[2], 10), player };
+
+    // 2. harvest <crop>
+    m = message.match(/^harvest\s+(.+)/i);
+    if (m) return { task: 'farm', action: 'harvest', crop: normalizeCrop(m[1]), player };
+
+    // 3. plant <crop>
+    m = message.match(/^plant\s+(.+)/i);
+    if (m) return { task: 'farm', action: 'plant', crop: normalizeCrop(m[1]), player };
+
+    // 4. farm / maintain <crop>
+    m = message.match(/^(farm|maintain)\s+(.+)/i);
+    if (m) return { task: 'farm', action: 'maintain', crop: normalizeCrop(m[2]), player };
+
+    // 5. follow me / follow (bare)
+    if (/^follow\s+me$/i.test(message) || /^follow$/i.test(message)) {
+      return { task: 'follow', player };
     }
-    return null; // unknown command
+
+    // 6. follow <username>
+    m = message.match(/^follow\s+(\w+)$/i);
+    if (m) return { task: 'follow', player: m[1] };
+
+    // 7. come here / come to me / come
+    if (/^come(\s+here|\s+to\s+me)?$/i.test(message)) {
+      return { task: 'come', player };
+    }
+
+    // 8. come to <username>
+    m = message.match(/^come\s+to\s+(\w+)$/i);
+    if (m) return { task: 'come', player: m[1] };
+
+    // 9. stop / halt / freeze
+    if (/(stop|halt|freeze)/i.test(message)) return { task: 'stop', player };
+
+    // 10. cancel / abort
+    if (/(cancel|abort)/i.test(message)) return { task: 'cancel', player };
+
+    // 11. status / what are you doing / busy
+    if (/(status|what.*doing|busy)/i.test(message)) return { task: 'status', player };
+
+    // 12. inventory / inv / items / what do you have
+    if (/(inventory|inv\b|items|what.*have)/i.test(message)) return { task: 'inventory', player };
+
+    // 13. health / hp / how are you
+    if (/(health|hp\b|how.*are)/i.test(message)) return { task: 'health', player };
+
+    // 14. build / make / construct <structure>
+    m = message.match(/^(build|make|construct)\s+(.+)/i);
+    if (m) return { task: 'build', structure: normalizeBlock(m[2]), player };
+
+    // 15. attack / kill / fight <target>
+    m = message.match(/^(attack|kill|fight)\s+(.+)/i);
+    if (m) return { task: 'attack', target: m[2].trim(), player };
+
+    // 16. defend
+    if (/^defend$/i.test(message)) return { task: 'defend', player };
+
+    // 17. help
+    if (/^help$/i.test(message)) return { task: 'help', player };
+
+    // 18. craft / smelt <item>
+    m = message.match(/^(craft|smelt)\s+(.+)/i);
+    if (m) return { task: 'craft', item: m[2].trim(), player };
+
+    return null;
   }
 }
 

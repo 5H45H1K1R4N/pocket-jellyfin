@@ -1,46 +1,46 @@
+'use strict';
+
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const Bot = require('./bot');
-const attachChat = require('./chat');
-const TaskQueue = require('./tasks/taskQueue');
-const TaskPlanner = require('./tasks/taskPlanner');
-const MockProvider = require('./ai/mockProvider');
+const Bot            = require('./bot');
+const TaskQueue      = require('./tasks/taskQueue');
+const TaskPlanner    = require('./tasks/taskPlanner');
+const ChatHandler    = require('./chat');
+const BotServer      = require('./api/botServer');
+const MockProvider   = require('./ai/mockProvider');
 const RemoteProvider = require('./ai/remoteProvider');
-const BotServer = require('./api/botServer');
 
-// Instantiate core components
-const bot = new Bot();
-const taskQueue = new TaskQueue();
-const taskPlanner = new TaskPlanner(bot, taskQueue);
+const botWrapper = new Bot();
+const queue      = new TaskQueue();
+const planner    = new TaskPlanner(botWrapper, queue);
+const ai         = process.env.AI_PROVIDER === 'remote'
+  ? new RemoteProvider()
+  : new MockProvider();
+const chat   = new ChatHandler(botWrapper, queue, ai);
+const server = new BotServer(botWrapper, queue);
 
-// Choose AI provider based on env
-let aiProvider;
-if (process.env.AI_PROVIDER === 'remote') {
-  aiProvider = new RemoteProvider();
-} else {
-  // default to mock (offline) provider
-  aiProvider = new MockProvider();
-}
+// Forward bot logs/errors to console
+botWrapper.on('log',   msg => console.log(msg));
+botWrapper.on('error', err => console.error('[Error]', err.message || err));
 
-// Wire chat handler (Phase 2)
-attachChat({ bot, username: process.env.MC_BOT_USERNAME || 'Peppy', emit: bot.emit.bind(bot) }, aiProvider, taskQueue);
+// Drive the task queue
+queue.on('taskReady', task => planner.handleTask(task));
 
-// When a task is dequeued, let the planner handle it
-taskQueue.on('taskReady', task => {
-  taskPlanner.handleTask(task);
-});
+// Attach chat whenever the underlying mineflayer bot spawns.
+// We patch _connect so this also works across reconnections.
+const _origConnect = botWrapper._connect.bind(botWrapper);
+botWrapper._connect = async function () {
+  await _origConnect();
+  if (botWrapper.bot) {
+    botWrapper.bot.once('spawn', () => {
+      try { chat.attach(); } catch (e) {
+        console.error('[Chat] attach error:', e.message);
+      }
+    });
+  }
+};
 
-// Log forwarding (optional – could be sent to dashboard later)
-bot.on('log', msg => console.log(msg));
-bot.on('error', err => console.error('[Bot error]', err));
-
-// Start HTTP API server (Phase 8)
-const apiServer = new BotServer(bot, taskQueue);
-apiServer.start();
-
-// Start the bot (Phase 1 core)
-bot.start().catch(err => {
-  console.error('Failed to start bot:', err);
-  process.exit(1);
-});
+// Start HTTP API server then the bot
+server.start();
+botWrapper.start().catch(err => console.error('[Startup]', err.message || err));
