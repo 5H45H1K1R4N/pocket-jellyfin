@@ -2,6 +2,11 @@
 
 const { GoalNear } = require('mineflayer-pathfinder').goals;
 
+/**
+ * MiningSkill – handles mining and resource gathering.
+ * Includes auto-tool equipping logic (best pickaxe/axe/shovel in inventory)
+ * and fail-streak recovery.
+ */
 class MiningSkill {
   constructor(botInstance) {
     this.botInstance = botInstance;
@@ -17,7 +22,7 @@ class MiningSkill {
     this._cancelled = false;
 
     if (!target || !amount) {
-      this.bot.chat('❓ Specify block and amount.');
+      this.bot.chat('❓ Specify block and amount (e.g. Peppy mine 32 iron_ore).');
       return;
     }
 
@@ -34,7 +39,7 @@ class MiningSkill {
       if (!block) {
         failStreak++;
         if (failStreak >= 3) {
-          this.bot.chat(`⚠️ Can't find ${target} nearby.`);
+          this.bot.chat(`⚠️ Can't find any ${target} within 64 blocks.`);
           break;
         }
         await this._sleep(1500);
@@ -48,27 +53,75 @@ class MiningSkill {
         );
         await this._waitForProximity(block.position, 2.5, 15000);
         if (this._cancelled) break;
+
+        // Equip the best available tool for this block before digging
+        await this._equipBestTool(block);
+
         await this.bot.dig(block);
         collected++;
         if (collected % 8 === 0 || collected === amount) {
           this.bot.chat(`⛏ ${collected}/${amount} ${target}`);
         }
       } catch (e) {
-        // block gone or unreachable – try another
+        // block broken by another player or path obstructed – retry
       }
     }
 
-    if (this._cancelled) {
-      this.bot.chat(`⛏ Cancelled. Got ${collected}/${amount}.`);
-    } else {
-      this.bot.chat(`✅ Done! ${collected}/${amount} ${target}.`);
-    }
+    this.bot.chat(
+      this._cancelled
+        ? `⛏ Cancelled. Got ${collected}/${amount} ${target}.`
+        : `✅ Finished! Collected ${collected}/${amount} ${target}.`
+    );
   }
 
-  _waitForProximity(pos, maxDist, timeoutMs = 15000) {
+  /**
+   * Intelligently equip the best tool (pickaxe, shovel, axe, shears) for the block.
+   */
+  async _equipBestTool(block) {
+    if (!this.bot || !block) return;
+    try {
+      // If mineflayer-tool plugin is installed, use its equipForBlock
+      if (this.bot.tool && typeof this.bot.tool.equipForBlock === 'function') {
+        await this.bot.tool.equipForBlock(block);
+        return;
+      }
+
+      // Native fallback tool selector
+      const toolPreference = ['netherite', 'diamond', 'iron', 'golden', 'stone', 'wooden'];
+      let targetType = 'pickaxe';
+
+      const name = block.name || '';
+      if (name.includes('log') || name.includes('wood') || name.includes('plank')) {
+        targetType = 'axe';
+      } else if (name.includes('dirt') || name.includes('sand') || name.includes('gravel') || name.includes('clay')) {
+        targetType = 'shovel';
+      }
+
+      const items = this.bot.inventory.items();
+      let bestItem = null;
+
+      for (const tier of toolPreference) {
+        const found = items.find(i => i.name === `${tier}_${targetType}`);
+        if (found) {
+          bestItem = found;
+          break;
+        }
+      }
+
+      if (bestItem) {
+        await this.bot.equip(bestItem, 'hand');
+      }
+    } catch (_) {}
+  }
+
+  _waitForProximity(pos, maxDist = 2.5, timeoutMs = 15000) {
     return new Promise(resolve => {
       const t = setTimeout(resolve, timeoutMs);
       const check = () => {
+        if (!this.bot || !this.bot.entity) {
+          clearTimeout(t);
+          return resolve();
+        }
         if (this.bot.entity.position.distanceTo(pos) <= maxDist) {
           clearTimeout(t);
           return resolve();
