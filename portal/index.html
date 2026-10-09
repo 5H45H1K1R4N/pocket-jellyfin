@@ -528,7 +528,8 @@
         <p style="font-size: 12px; color: var(--text-muted);">Chronological timeline of your authorized memories</p>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button onclick="fetchPhotos()" class="btn-secondary">🔄 Refresh</button>
+        <button onclick="openModal('adminImportModal')" class="btn-primary" style="padding: 6px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">📥 Import Photos</button>
+        <button onclick="fetchPhotos()" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">🔄 Refresh</button>
       </div>
     </div>
 
@@ -883,8 +884,11 @@
       <select id="importAlbumSelect" class="form-select"></select>
     </div>
 
-    <div style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between;">
-      <span>Available Photos to Import</span>
+    <div style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+      <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0; user-select: none;">
+        <input type="checkbox" id="importSelectAll" onchange="toggleSelectAllImport(this.checked)">
+        <span>Select All</span>
+      </label>
       <span id="importCountSelected" style="color: var(--accent);">0 selected</span>
     </div>
 
@@ -1538,9 +1542,17 @@
     }
   }
 
+  function toggleSelectAllImport(checked) {
+    document.querySelectorAll('.import-chk').forEach(c => c.checked = checked);
+    updateImportSelectedCount();
+  }
+
   function updateImportSelectedCount() {
+    const total = document.querySelectorAll('.import-chk').length;
     const count = document.querySelectorAll('.import-chk:checked').length;
-    document.getElementById('importCountSelected').textContent = `${count} selected`;
+    document.getElementById('importCountSelected').textContent = `${count} of ${total} selected`;
+    const selAll = document.getElementById('importSelectAll');
+    if (selAll && total > 0) selAll.checked = (count === total);
   }
 
   async function executePhotoImport() {

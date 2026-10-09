@@ -30,6 +30,9 @@ HOST = "0.0.0.0"
 
 # Safe storage root resolution (Android Termux Scoped Storage compatible)
 SD_CARD_ID = "26B2-1AEB"
+STORAGE_ROOT = f"/storage/{SD_CARD_ID}" if os.path.exists(f"/storage/{SD_CARD_ID}") else os.path.expanduser("~/storage/shared")
+if not os.path.exists(STORAGE_ROOT):
+    STORAGE_ROOT = os.path.expanduser("~")
 
 def get_writable_dir(sub_name: str) -> str:
     """Find a genuinely writable directory, checking external storage then internal then home."""
@@ -449,14 +452,20 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
 
             # Approved, safe import directories
             candidates = [
-                os.path.join(STORAGE_ROOT, "DCIM"),
-                os.path.join(STORAGE_ROOT, "Pictures"),
-                os.path.join(STORAGE_ROOT, "Download"),
+                f"/storage/{SD_CARD_ID}/DCIM/Camera",
+                f"/storage/{SD_CARD_ID}/DCIM",
+                f"/storage/{SD_CARD_ID}/Pictures",
+                "/storage/emulated/0/DCIM/Camera",
                 "/storage/emulated/0/DCIM",
                 "/storage/emulated/0/Pictures",
-                os.path.expanduser("~/storage/shared/DCIM")
+                "/storage/emulated/0/Download",
+                os.path.expanduser("~/storage/shared/DCIM/Camera"),
+                os.path.expanduser("~/storage/shared/DCIM"),
+                os.path.expanduser("~/storage/shared/Pictures"),
+                os.path.expanduser("~/storage/shared/Download"),
+                DROP_DIR
             ]
-            valid_sources = [p for p in candidates if os.path.exists(p) and os.path.isdir(p)]
+            valid_sources = list(dict.fromkeys([p for p in candidates if os.path.exists(p) and os.path.isdir(p)]))
             self.send_json({"sources": valid_sources})
             return
 
