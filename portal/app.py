@@ -795,6 +795,15 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
 class ReusableHTTPServer(HTTPServer):
     allow_reuse_address = True
 
+    def server_bind(self):
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if hasattr(socket, "SO_REUSEPORT"):
+            try:
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            except OSError:
+                pass
+        super().server_bind()
+
 def main():
     db.init_db()
     ip = get_local_ip()
@@ -804,7 +813,28 @@ def main():
     print(f"  Photos Directory:    {PHOTOS_DIR}")
     print(f"  File Drop Directory: {DROP_DIR}")
     print("=" * 64)
-    server = ReusableHTTPServer((HOST, PORT), PeppyHomeHubHandler)
+
+    server = None
+    for attempt in range(5):
+        try:
+            server = ReusableHTTPServer((HOST, PORT), PeppyHomeHubHandler)
+            break
+        except OSError as e:
+            if "Address already in use" in str(e) or getattr(e, "errno", None) in (98, 10048):
+                sys.stderr.write(f"Port {PORT} busy (attempt {attempt+1}/5). Releasing socket...\n")
+                try:
+                    import subprocess
+                    subprocess.run(["fuser", "-k", f"{PORT}/tcp"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except Exception:
+                    pass
+                time.sleep(1)
+            else:
+                raise
+
+    if not server:
+        sys.stderr.write(f"Fatal: Could not bind to port {PORT} after multiple attempts.\n")
+        sys.exit(1)
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:

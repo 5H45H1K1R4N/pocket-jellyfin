@@ -10,6 +10,16 @@ mkdir -p "$PORTAL_DIR"
 
 BASE_URL="https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/portal"
 
+# Ensure any stale portal or port 7777 occupant is terminated
+pkill -9 -f "app.py" 2>/dev/null || true
+pkill -9 -f "portal" 2>/dev/null || true
+if command -v fuser >/dev/null 2>&1; then fuser -k 7777/tcp 2>/dev/null || true; fi
+if command -v lsof >/dev/null 2>&1; then
+    PIDS=$(lsof -ti:7777 2>/dev/null || true)
+    if [ -n "$PIDS" ]; then kill -9 $PIDS 2>/dev/null || true; fi
+fi
+sleep 1
+
 echo "[1/3] Downloading Peppy Home Hub portal engine..."
 curl -fsSL "$BASE_URL/db.py?t=$(date +%s)" -o "$PORTAL_DIR/db.py"
 curl -fsSL "$BASE_URL/app.py?t=$(date +%s)" -o "$PORTAL_DIR/app.py"
@@ -27,16 +37,27 @@ cat << 'EOF' > "$PREFIX/bin/peppy-hub"
 PY=$(command -v python3 || command -v python)
 PORTAL_PATH="$HOME/.pocket-mc/portal"
 
+stop_portal() {
+    pkill -9 -f "app.py" 2>/dev/null || true
+    pkill -9 -f "portal" 2>/dev/null || true
+    if command -v fuser >/dev/null 2>&1; then fuser -k 7777/tcp 2>/dev/null || true; fi
+    if command -v lsof >/dev/null 2>&1; then
+        PIDS=$(lsof -ti:7777 2>/dev/null || true)
+        if [ -n "$PIDS" ]; then kill -9 $PIDS 2>/dev/null || true; fi
+    fi
+    sleep 1
+}
+
 case "$1" in
     stop)
-        pkill -f "portal/app.py" 2>/dev/null || true
+        stop_portal
         echo "Peppy Home Hub stopped."
         ;;
     log|logs)
         tail -f "$HOME/.pocket-mc/portal.log"
         ;;
     status)
-        if pgrep -f "portal/app.py" > /dev/null; then
+        if pgrep -f "app.py" > /dev/null; then
             echo "[✔] Peppy Home Hub is running on port 7777."
         else
             echo "[!] Peppy Home Hub is offline."
@@ -47,12 +68,11 @@ case "$1" in
         fi
         ;;
     restart)
-        pkill -f "portal/app.py" 2>/dev/null || true
-        sleep 1
+        stop_portal
         cd "$PORTAL_PATH"
         nohup "$PY" app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
         sleep 2
-        if ! pgrep -f "portal/app.py" > /dev/null; then
+        if ! pgrep -f "app.py" > /dev/null; then
             echo "❌ [ERROR] Peppy Home Hub failed to start! Check ~/.pocket-mc/portal.log:"
             tail -n 25 "$HOME/.pocket-mc/portal.log"
             exit 1
@@ -61,12 +81,11 @@ case "$1" in
         echo "[✔] Peppy Home Hub restarted at: http://${IP}:7777"
         ;;
     start|"")
-        pkill -f "portal/app.py" 2>/dev/null || true
-        sleep 1
+        stop_portal
         cd "$PORTAL_PATH"
         nohup "$PY" app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
         sleep 2
-        if ! pgrep -f "portal/app.py" > /dev/null; then
+        if ! pgrep -f "app.py" > /dev/null; then
             echo "❌ [ERROR] Peppy Home Hub failed to start! Check ~/.pocket-mc/portal.log:"
             tail -n 25 "$HOME/.pocket-mc/portal.log"
             exit 1
