@@ -792,6 +792,52 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         except Exception:
             pass
 
+def free_port(port: int):
+    """Scan /proc to find and terminate any stale process holding the port."""
+    hex_port = f"{port:04X}"
+    inodes = set()
+    for tcp_file in ("/proc/net/tcp", "/proc/net/tcp6"):
+        if not os.path.exists(tcp_file):
+            continue
+        try:
+            with open(tcp_file, "r") as f:
+                lines = f.readlines()[1:]
+            for line in lines:
+                parts = line.strip().split()
+                if len(parts) >= 10:
+                    local_addr = parts[1]
+                    if local_addr.endswith(":" + hex_port):
+                        inodes.add(parts[9])
+        except Exception:
+            pass
+
+    if not inodes:
+        return
+
+    my_pid = os.getpid()
+    for pid_str in os.listdir("/proc"):
+        if not pid_str.isdigit():
+            continue
+        pid = int(pid_str)
+        if pid == my_pid:
+            continue
+        fd_dir = f"/proc/{pid}/fd"
+        if not os.path.exists(fd_dir):
+            continue
+        try:
+            for fd in os.listdir(fd_dir):
+                try:
+                    target = os.readlink(f"{fd_dir}/{fd}")
+                    for inode in inodes:
+                        if f"socket:[{inode}]" in target or inode in target:
+                            os.kill(pid, 9)
+                            sys.stderr.write(f"Freed port {port} by terminating PID {pid}\n")
+                            break
+                except Exception:
+                    pass
+        except Exception:
+            continue
+
 class ReusableHTTPServer(HTTPServer):
     allow_reuse_address = True
 
@@ -805,6 +851,7 @@ class ReusableHTTPServer(HTTPServer):
         super().server_bind()
 
 def main():
+    free_port(PORT)
     db.init_db()
     ip = get_local_ip()
     print("=" * 64)
@@ -821,12 +868,8 @@ def main():
             break
         except OSError as e:
             if "Address already in use" in str(e) or getattr(e, "errno", None) in (98, 10048):
-                sys.stderr.write(f"Port {PORT} busy (attempt {attempt+1}/5). Releasing socket...\n")
-                try:
-                    import subprocess
-                    subprocess.run(["fuser", "-k", f"{PORT}/tcp"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                except Exception:
-                    pass
+                sys.stderr.write(f"Port {PORT} busy (attempt {attempt+1}/5). Freeing socket...\n")
+                free_port(PORT)
                 time.sleep(1)
             else:
                 raise
