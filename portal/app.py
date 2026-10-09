@@ -3,13 +3,7 @@
 KHURE-HUB / KHURE-SERVER
 Welcome Portal & Local Service Hub for Home Wi-Fi
 Runs on port 7777 inside Termux on Android. Zero external dependencies.
-Provides:
-  - Live service status checking (Jellyfin :8096, Minecraft :25565 / :19132, Dashboard :8088, Peppy Bot :8089)
-  - Direct 1-tap launchers for movies and Minecraft (Java/Bedrock copy IP)
-  - High-speed Local File & Photo Drop (saved directly to shared storage / SD card)
-  - File browser & download for shared family files
-  - Dynamic QR Code generator for printable scan-and-connect cards
-  - Real-time battery & phone health telemetry
+Compatible with Python 3.13 / 3.14 (cgi-free multipart parser).
 """
 
 import os
@@ -18,7 +12,7 @@ import json
 import time
 import socket
 import shutil
-import cgi
+import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, unquote
 
@@ -106,6 +100,42 @@ def list_dropped_files():
             pass
     return files[:40]
 
+def parse_multipart_files(body_bytes, boundary_bytes):
+    """Zero-dependency multipart file parser (no 'cgi' module required)."""
+    uploaded = []
+    parts = body_bytes.split(b"--" + boundary_bytes)
+
+    for part in parts:
+        if not part or part == b"--\r\n" or part == b"--":
+            continue
+        # Split headers and body
+        if b"\r\n\r\n" in part:
+            header_bytes, content = part.split(b"\r\n\r\n", 1)
+            # Remove trailing CRLF from content
+            if content.endswith(b"\r\n"):
+                content = content[:-2]
+
+            headers_text = header_bytes.decode("utf-8", errors="ignore")
+            # Look for filename="example.jpg"
+            match = re.search(r'filename="([^"]+)"', headers_text)
+            if match and content:
+                raw_filename = match.group(1)
+                safe_name = os.path.basename(raw_filename)
+                if not safe_name:
+                    continue
+
+                dest_path = os.path.join(DROP_DIR, safe_name)
+                if os.path.exists(dest_path):
+                    base, ext = os.path.splitext(safe_name)
+                    dest_path = os.path.join(DROP_DIR, f"{base}_{int(time.time())}{ext}")
+                    safe_name = os.path.basename(dest_path)
+
+                with open(dest_path, "wb") as f:
+                    f.write(content)
+                uploaded.append(safe_name)
+
+    return uploaded
+
 class KhurePortalHandler(BaseHTTPRequestHandler):
     def send_json(self, data, status=200):
         body = json.dumps(data).encode("utf-8")
@@ -170,7 +200,6 @@ class KhurePortalHandler(BaseHTTPRequestHandler):
 
         elif parsed.path.startswith("/download/"):
             filename = unquote(parsed.path[len("/download/"):])
-            # Prevent directory traversal
             clean_name = os.path.basename(filename)
             filepath = os.path.join(DROP_DIR, clean_name)
             if os.path.exists(filepath) and os.path.isfile(filepath):
@@ -198,36 +227,22 @@ class KhurePortalHandler(BaseHTTPRequestHandler):
                 return
 
             try:
-                # Parse multipart upload without dependencies
-                form = cgi.FieldStorage(
-                    fp=self.rfile,
-                    headers=self.headers,
-                    environ={
-                        'REQUEST_METHOD': 'POST',
-                        'CONTENT_TYPE': content_type,
-                    }
-                )
+                # Extract boundary
+                boundary_match = re.search(r'boundary=(.+)$', content_type)
+                if not boundary_match:
+                    self.send_json({"success": False, "error": "No boundary found"}, 400)
+                    return
 
-                uploaded_files = []
-                file_items = form['files'] if 'files' in form else []
-                if not isinstance(file_items, list):
-                    file_items = [file_items]
+                boundary = boundary_match.group(1).strip()
+                if boundary.startswith('"') and boundary.endswith('"'):
+                    boundary = boundary[1:-1]
+                boundary_bytes = boundary.encode("utf-8")
 
-                for item in file_items:
-                    if item.filename:
-                        safe_name = os.path.basename(item.filename)
-                        dest_path = os.path.join(DROP_DIR, safe_name)
-                        # Avoid overwrite if file exists by appending timestamp
-                        if os.path.exists(dest_path):
-                            base, ext = os.path.splitext(safe_name)
-                            dest_path = os.path.join(DROP_DIR, f"{base}_{int(time.time())}{ext}")
-                            safe_name = os.path.basename(dest_path)
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_bytes = self.rfile.read(content_length)
 
-                        with open(dest_path, "wb") as f:
-                            f.write(item.file.read())
-                        uploaded_files.append(safe_name)
-
-                self.send_json({"success": True, "uploaded": uploaded_files})
+                uploaded = parse_multipart_files(body_bytes, boundary_bytes)
+                self.send_json({"success": True, "uploaded": uploaded})
             except Exception as e:
                 self.send_json({"success": False, "error": str(e)}, 500)
             return
