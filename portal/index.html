@@ -3,1127 +3,1224 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Peppy Home Hub | Your Home. Your Services. One Hub.</title>
-<meta name="theme-color" content="#060810">
-<!-- Built-in QR Code Generator -->
+<title>Peppy Home Hub | Your Home. Your Memories. Your Private Cloud.</title>
+<meta name="theme-color" content="#08090e">
+<!-- Embedded Feather-like SVG Icon System & QR Code Engine -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --bg: #060810;
-    --surface: #0c0f1d;
-    --card: #121629;
-    --card-hover: #191f38;
-    --card-inner: #0a0d18;
-    --border: #1c223c;
-    --border-bright: #2d3862;
-    --text: #f1f5f9;
-    --text-muted: #828ea8;
-    --cyan: #00e5ff;
-    --cyan-glow: rgba(0, 229, 255, 0.22);
-    --cyan-subtle: rgba(0, 229, 255, 0.08);
-    --blue: #3b82f6;
+    --bg: #08090e;
+    --surface: #0f121a;
+    --surface-hover: #161b26;
+    --card: #131722;
+    --card-border: #1f2637;
+    --card-inner: #0b0e15;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #0ea5e9;
+    --accent-hover: #38bdf8;
+    --accent-dim: rgba(14, 165, 233, 0.12);
     --green: #10b981;
-    --green-glow: rgba(16, 185, 129, 0.25);
+    --green-dim: rgba(16, 185, 129, 0.12);
     --red: #ef4444;
+    --red-dim: rgba(239, 68, 68, 0.12);
     --yellow: #f59e0b;
-    --purple: #8b5cf6;
-    --radius-lg: 20px;
-    --radius-md: 14px;
-    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
     background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+    font-family: var(--font);
     min-height: 100vh;
-    padding-bottom: 70px;
+    padding-bottom: 72px;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
 
-  /* Subtle background radial glow */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 50%;
-    transform: translateX(-50%);
-    width: 1000px; height: 500px;
-    background: radial-gradient(circle, rgba(0, 229, 255, 0.05) 0%, rgba(59, 130, 246, 0.02) 40%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
+  /* ── Layout & Header ── */
+  .top-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8, 9, 14, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 0 16px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
   }
+  .brand-group {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: inherit; cursor: pointer;
+  }
+  .brand-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px; font-weight: 800;
+    box-shadow: 0 2px 10px rgba(14, 165, 233, 0.3);
+  }
+  .brand-text { display: flex; flex-direction: column; }
+  .brand-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .brand-sub { font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
 
-  .container {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 16px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ── Header ── */
-  .header {
-    text-align: center;
-    padding: 28px 12px 20px;
-  }
-  .brand-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--cyan-subtle);
-    border: 1px solid rgba(0, 229, 255, 0.3);
-    color: var(--cyan);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    padding: 5px 14px;
-    border-radius: 30px;
-    margin-bottom: 14px;
-    box-shadow: 0 0 16px var(--cyan-glow);
-  }
-  .brand-logo-icon {
-    font-size: 14px;
-    display: inline-block;
-  }
-
-  .hero-title {
-    font-size: 34px;
-    font-weight: 800;
-    letter-spacing: -0.8px;
-    line-height: 1.15;
-    background: linear-gradient(135deg, #ffffff 40%, #7dd3fc 80%, #00e5ff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .hero-tagline {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-top: 8px;
-    font-weight: 500;
-  }
-
-  /* ── Network & Time Ribbon ── */
-  .ribbon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-top: 18px;
-    flex-wrap: wrap;
-  }
-  .ribbon-pill {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 6px 14px;
-    border-radius: 30px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 8px var(--green);
-  }
-  .status-dot.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
-  .status-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
-
-  /* ── Navigation Tabs ── */
-  .nav-tabs {
-    display: flex;
+  .user-menu-group { display: flex; align-items: center; gap: 10px; }
+  .user-pill {
+    display: flex; align-items: center; gap: 8px;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 4px;
-    margin: 24px 0 20px;
-    gap: 4px;
-    overflow-x: auto;
-  }
-  .tab-btn {
-    flex: 1;
-    min-width: 90px;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 10px 8px;
-    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    transition: all 0.15s;
+  }
+  .user-pill:hover { border-color: var(--accent); }
+  .role-badge {
+    font-size: 9.5px; text-transform: uppercase; font-weight: 700;
+    padding: 2px 6px; border-radius: 10px;
+    background: var(--accent-dim); color: var(--accent);
+  }
+  .role-badge.admin { background: rgba(168, 85, 247, 0.18); color: #c084fc; }
+
+  /* ── Tab Navigation ── */
+  .nav-bar {
+    max-width: 860px; margin: 16px auto 0; padding: 0 16px;
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-bar::-webkit-scrollbar { display: none; }
+  .nav-item {
+    flex: 1; min-width: 82px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: transparent; border: none;
+    color: var(--text-secondary);
+    font-size: 12.5px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
     white-space: nowrap;
   }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active {
+  .nav-item:hover { color: var(--text-primary); }
+  .nav-item.active {
     background: var(--card);
-    color: var(--cyan);
-    border: 1px solid var(--border-bright);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }
 
-  /* ── Tab Views ── */
-  .tab-content { display: none; }
-  .tab-content.active { display: block; animation: fadeIn 0.25s ease-out; }
+  .admin-bar {
+    max-width: 860px; margin: 8px auto 0; padding: 0 16px;
+    display: none; gap: 6px;
+  }
+  .admin-bar.visible { display: flex; }
+  .admin-pill-btn {
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    color: #d8b4fe;
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .admin-pill-btn:hover { background: rgba(168, 85, 247, 0.2); }
+
+  /* ── Main Container ── */
+  .container {
+    max-width: 860px;
+    margin: 18px auto 0;
+    padding: 0 16px;
+  }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; animation: fadeIn 0.2s ease-out; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ── Section Title ── */
-  .section-heading {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin: 20px 4px 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* ── Service Cards ── */
-  .service-card {
+  /* ── Service Card System ── */
+  .card {
     background: var(--card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);
-    padding: 22px;
+    padding: 20px;
     margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.2s;
   }
-  .service-card:hover {
-    border-color: var(--border-bright);
-  }
-  .service-card::after {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 140px; height: 140px;
-    border-radius: 50%;
-    pointer-events: none;
-  }
-  .card-jellyfin::after {
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
-  }
-  .card-minecraft::after {
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
-  }
-
+  .card:hover { border-color: #2a344d; }
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 12px;
   }
-  .card-title-group {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+  .card-title-wrap { display: flex; align-items: center; gap: 12px; }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--card-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
   }
-  .service-icon {
-    width: 48px; height: 48px;
-    border-radius: var(--radius-md);
-    background: var(--card-inner);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-  }
-  .service-title {
-    font-size: 19px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-  }
-  .service-sub {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
+  .card-title { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+  .card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; }
 
-  .badge-status {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--green);
+  /* Status Badges */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    background: var(--green-dim); color: var(--green);
     border: 1px solid rgba(16, 185, 129, 0.25);
   }
-  .badge-status.offline {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--red);
+  .status-badge.offline {
+    background: var(--red-dim); color: var(--red);
     border-color: rgba(239, 68, 68, 0.25);
   }
-
-  .service-desc {
-    font-size: 13.5px;
-    color: #cbd5e1;
-    line-height: 1.5;
-    margin-bottom: 18px;
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 6px currentColor;
   }
 
-  /* Action Buttons */
+  /* Buttons */
   .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent); color: #fff;
+    padding: 11px 18px; border-radius: var(--radius-md);
+    font-size: 13.5px; font-weight: 600; text-decoration: none; border: none;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
     width: 100%;
-    background: linear-gradient(135deg, #00c4de 0%, #0088cc 100%);
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 13px 20px;
-    border-radius: var(--radius-md);
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 196, 222, 0.25);
-    transition: transform 0.15s, opacity 0.15s;
   }
-  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:hover { background: var(--accent-hover); }
 
   .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: var(--card-inner);
-    border: 1px solid var(--border);
-    color: #cbd5e1;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 10px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; text-decoration: none; cursor: pointer;
     transition: all 0.15s;
   }
-  .btn-secondary:hover { border-color: var(--cyan); color: #ffffff; }
+  .btn-secondary:hover { border-color: var(--accent); }
 
-  /* Help Accordion */
-  .accordion-box {
-    background: var(--card-inner);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    margin-top: 14px;
-    overflow: hidden;
+  .btn-danger {
+    background: var(--red-dim); border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5; padding: 6px 10px; border-radius: 6px;
+    font-size: 11.5px; font-weight: 600; cursor: pointer;
   }
-  .accordion-header {
-    padding: 12px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--cyan);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-  }
-  .accordion-body {
-    padding: 0 14px 14px;
-    font-size: 12px;
-    color: var(--text-muted);
-    line-height: 1.55;
-    display: none;
-    border-top: 1px solid rgba(255,255,255,0.04);
-    padding-top: 10px;
-  }
-  .accordion-box.open .accordion-body { display: block; }
-  .accordion-box.open .acc-arrow { transform: rotate(180deg); }
-  .acc-arrow { transition: transform 0.2s; font-size: 10px; }
 
-  /* Spec Grid for Minecraft */
-  .spec-grid {
+  /* ── Peppy Photos Timeline (Google Photos Inspired) ── */
+  .photos-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .album-pills {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .album-pill {
+    background: var(--surface); border: 1px solid var(--card-border);
+    color: var(--text-secondary); padding: 5px 12px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .album-pill.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .date-group { margin-bottom: 22px; }
+  .date-title {
+    font-size: 13px; font-weight: 700; color: var(--text-muted);
+    letter-spacing: 0.5px; margin-bottom: 10px; text-transform: uppercase;
+  }
+  .photo-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .spec-card {
-    background: var(--card-inner);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .spec-card:active { border-color: var(--cyan); background: var(--cyan-subtle); }
-  .spec-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-  .spec-val {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    font-family: monospace;
-    margin-top: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  /* ── File Drop Box ── */
-  .dropzone {
-    background: var(--card-inner);
-    border: 2px dashed rgba(0, 229, 255, 0.35);
-    border-radius: var(--radius-lg);
-    padding: 30px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .dropzone.dragover {
-    border-color: var(--cyan);
-    background: var(--cyan-subtle);
-  }
-  .drop-icon { font-size: 40px; margin-bottom: 8px; }
-  .drop-main { font-size: 15px; font-weight: 700; }
-  .drop-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-  .file-input { display: none; }
-
-  .upload-progress-box {
-    margin-top: 14px;
-    display: none;
-  }
-  .progress-track {
-    height: 6px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-top: 6px;
-  }
-  .progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #00c4de, #3b82f6);
-    transition: width 0.25s;
-  }
-
-  /* File items */
-  .file-list {
-    margin-top: 14px;
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 8px;
   }
-  .file-row {
-    background: var(--card-inner);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13px;
+  @media (min-width: 600px) {
+    .photo-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
   }
-  .file-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    overflow: hidden;
-  }
-  .file-name {
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
-  }
-  .file-sub { font-size: 11px; color: var(--text-muted); }
 
-  /* ── Status Grid ── */
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 16px;
+  .photo-item {
+    position: relative; aspect-ratio: 1 / 1;
+    border-radius: var(--radius-md); overflow: hidden;
+    background: var(--card-inner); border: 1px solid var(--card-border);
+    cursor: pointer; transition: transform 0.15s, border-color 0.15s;
   }
-  .metric-box {
-    background: var(--card-inner);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
+  .photo-item:hover { transform: scale(1.02); border-color: var(--accent); }
+  .photo-thumb {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    background: #0f131c;
+  }
+  .photo-fav-badge {
+    position: absolute; top: 6px; right: 6px;
+    background: rgba(0,0,0,0.6); border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #ec4899;
+  }
+  .photo-caption-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+    padding: 14px 8px 6px;
+    font-size: 11px; color: #fff; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Lightbox / Photo Viewer ── */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(4, 5, 8, 0.96);
+    backdrop-filter: blur(12px);
+    display: none; flex-direction: column;
+  }
+  .lightbox.open { display: flex; }
+  .lb-topbar {
+    height: 56px; padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .lb-counter { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .lb-actions { display: flex; gap: 8px; }
+  .lb-btn {
+    background: var(--surface); border: 1px solid var(--card-border);
+    color: #fff; width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; text-decoration: none; font-size: 14px;
+  }
+  .lb-main {
+    flex: 1; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: hidden;
+  }
+  .lb-img {
+    max-width: 95%; max-height: 85vh;
+    object-fit: contain; border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+    transition: opacity 0.2s;
+  }
+  .lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(15, 18, 26, 0.7); border: 1px solid var(--card-border);
+    color: #fff; width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 20px; transition: all 0.15s;
+  }
+  .lb-nav:hover { background: var(--accent); }
+  .lb-prev { left: 16px; }
+  .lb-next { right: 16px; }
+  .lb-footer {
+    padding: 12px 16px; font-size: 12px; color: var(--text-secondary);
+    background: rgba(8, 9, 14, 0.9); border-top: 1px solid rgba(255,255,255,0.08);
     text-align: center;
   }
-  .metric-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-  .metric-value { font-size: 19px; font-weight: 800; color: #fff; margin-top: 4px; }
 
-  /* ── QR Card ── */
-  .qr-box {
-    background: var(--card);
-    border: 1px solid var(--border);
+  /* ── File Drop Zone (Dropbox Inspired) ── */
+  .dropzone {
+    background: var(--card-inner);
+    border: 2px dashed rgba(14, 165, 233, 0.35);
     border-radius: var(--radius-lg);
-    padding: 24px;
-    text-align: center;
+    padding: 30px 16px; text-align: center;
+    cursor: pointer; transition: all 0.2s;
   }
-  .qr-frame {
-    display: inline-block;
-    background: #ffffff;
-    padding: 14px;
-    border-radius: 14px;
-    margin: 14px 0;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-  }
-
-  /* ── FAQ items ── */
-  .faq-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    margin-bottom: 10px;
-    overflow: hidden;
-  }
-  .faq-q {
-    padding: 14px 16px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .faq-a {
-    padding: 0 16px 14px;
+  .dropzone.dragover { border-color: var(--accent); background: var(--accent-dim); }
+  .file-table {
+    width: 100%; border-collapse: collapse; margin-top: 14px;
     font-size: 12.5px;
-    color: var(--text-muted);
-    line-height: 1.55;
-    display: none;
-    border-top: 1px solid rgba(255,255,255,0.04);
-    padding-top: 10px;
   }
-  .faq-item.open .faq-a { display: block; }
-  .faq-item.open .faq-arrow { transform: rotate(180deg); }
-  .faq-arrow { font-size: 10px; color: var(--cyan); transition: transform 0.2s; }
+  .file-table th {
+    text-align: left; padding: 8px 10px; color: var(--text-muted);
+    font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--card-border);
+  }
+  .file-table td {
+    padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .file-name-cell { font-weight: 600; color: #fff; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* ── Toast Alert ── */
+  /* ── Admin Management Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg); width: 100%; max-width: 500px;
+    max-height: 90vh; overflow-y: auto; padding: 22px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .form-input, .form-select {
+    width: 100%; background: var(--card-inner); border: 1px solid var(--card-border);
+    color: #fff; padding: 10px 12px; border-radius: var(--radius-sm);
+    font-size: 13px; font-family: inherit;
+  }
+  .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Toast ── */
   .toast {
-    position: fixed;
-    bottom: 24px; left: 50%;
+    position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: #1e2540;
-    border: 1px solid var(--cyan);
-    color: #fff;
-    padding: 11px 22px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1000;
-    white-space: nowrap;
+    background: #182033; border: 1px solid var(--accent);
+    color: #fff; padding: 10px 20px; border-radius: 30px;
+    font-size: 12.5px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    transition: transform 0.25s ease; z-index: 2000; white-space: nowrap;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<div class="container">
-
-  <!-- Header -->
-  <header class="header">
-    <div class="brand-chip">
-      <span class="brand-logo-icon">🚀</span>
-      <span>PEPPY HOME HUB</span>
+<!-- Top App Bar -->
+<header class="top-nav">
+  <div class="brand-group" onclick="switchTab('home')">
+    <div class="brand-icon">P</div>
+    <div class="brand-text">
+      <span class="brand-name">Peppy Home Hub</span>
+      <span class="brand-sub">Private Cloud 2.0</span>
     </div>
-    <h1 class="hero-title">Welcome Home</h1>
-    <p class="hero-tagline">Your Home. Your Services. One Hub.</p>
+  </div>
 
-    <!-- Network & Live Time Ribbon -->
-    <div class="ribbon">
-      <div class="ribbon-pill">
-        <span class="status-dot" id="globalStateDot"></span>
-        <span id="globalStateText">Local Wi-Fi Hub Online</span>
-      </div>
-      <div class="ribbon-pill">
-        <span>🕒</span>
-        <span id="liveClock">--:--:--</span>
-      </div>
-      <div class="ribbon-pill">
-        <span>📶</span>
-        <span id="networkIpPill">Checking IP...</span>
-      </div>
+  <div class="user-menu-group">
+    <div id="unauthBtn" style="display: none;">
+      <button onclick="openModal('loginModal')" class="btn-secondary">Sign In</button>
     </div>
-  </header>
-
-  <!-- Navigation Bar -->
-  <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('home', this)">
-      <span>🏠</span> Home
-    </button>
-    <button class="tab-btn" onclick="switchTab('movies', this)">
-      <span>🍿</span> Movies & TV
-    </button>
-    <button class="tab-btn" onclick="switchTab('minecraft', this)">
-      <span>⛏️</span> Minecraft
-    </button>
-    <button class="tab-btn" onclick="switchTab('files', this)">
-      <span>📤</span> File Drop
-    </button>
-    <button class="tab-btn" onclick="switchTab('status', this)">
-      <span>📊</span> Status
-    </button>
-    <button class="tab-btn" onclick="switchTab('help', this)">
-      <span>❓</span> Help
-    </button>
-  </nav>
-
-  <!-- ══════════════ TAB 1: HOME (OVERVIEW) ══════════════ -->
-  <section class="tab-content active" id="tab-home">
-    <div class="section-heading">Featured Home Services</div>
-
-    <!-- Movies Overview Card -->
-    <div class="service-card card-jellyfin">
-      <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">🍿</div>
-          <div>
-            <div class="service-title">Movies & TV Series</div>
-            <div class="service-sub">Powered by Jellyfin Cinema</div>
-          </div>
-        </div>
-        <div class="badge-status" id="homeJfBadge"><span class="status-dot"></span> Checking</div>
-      </div>
-      <p class="service-desc">Stream movies, family videos, and shows in full quality directly to any phone, laptop, or TV browser without internet buffering.</p>
-      <div style="display: flex; gap: 8px;">
-        <a href="#" id="homeJfBtn" target="_blank" class="btn-primary" style="flex: 2;">Launch Cinema →</a>
-        <button onclick="switchTab('movies', document.querySelectorAll('.tab-btn')[1])" class="btn-secondary" style="flex: 1;">Login Info</button>
-      </div>
+    <div id="authPill" class="user-pill" style="display: none;" onclick="openModal('accountModal')">
+      <span id="userDisplayName">User</span>
+      <span id="userRoleBadge" class="role-badge">Member</span>
     </div>
+  </div>
+</header>
 
-    <!-- Minecraft Overview Card -->
-    <div class="service-card card-minecraft">
-      <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">⛏️</div>
-          <div>
-            <div class="service-title">Minecraft Server</div>
-            <div class="service-sub">PaperMC 1.21 Survival World</div>
-          </div>
-        </div>
-        <div class="badge-status" id="homeMcBadge"><span class="status-dot"></span> Checking</div>
-      </div>
-      <p class="service-desc">Join our persistent 24/7 multiplayer world. Cross-play enabled for Java (PC) and Bedrock (Phone, Tablet, Console).</p>
-      <div class="spec-grid">
-        <div class="spec-card" onclick="copyText(serverIP + ':25565', 'Java IP')">
-          <div class="spec-label">Java Edition (PC)</div>
-          <div class="spec-val"><span id="homeJavaIp">--:25565</span> 📋</div>
-        </div>
-        <div class="spec-card" onclick="copyText(serverIP, 'Bedrock IP (Port 19132)')">
-          <div class="spec-label">Bedrock (Mobile/Xbox)</div>
-          <div class="spec-val">Port: 19132 📋</div>
-        </div>
-      </div>
-      <a href="#" id="homeDashboardBtn" target="_blank" class="btn-secondary" style="width: 100%;">
-        🤖 Open PocketMC & Peppy Bot Dashboard →
-      </a>
-    </div>
+<!-- Main Nav Tabs -->
+<nav class="nav-bar">
+  <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
+    <span>🏠</span> Home
+  </button>
+  <button class="nav-item" id="nav-photos" onclick="switchTab('photos')">
+    <span>🖼️</span> Photos
+  </button>
+  <button class="nav-item" id="nav-movies" onclick="switchTab('movies')">
+    <span>🍿</span> Movies & TV
+  </button>
+  <button class="nav-item" id="nav-files" onclick="switchTab('files')">
+    <span>📤</span> File Drop
+  </button>
+  <button class="nav-item" id="nav-minecraft" onclick="switchTab('minecraft')">
+    <span>⛏️</span> Minecraft
+  </button>
+  <button class="nav-item" id="nav-status" onclick="switchTab('status')">
+    <span>📊</span> Status
+  </button>
+  <button class="nav-item" id="nav-help" onclick="switchTab('help')">
+    <span>❓</span> Help
+  </button>
+</nav>
 
-    <!-- File Drop Quick Card -->
-    <div class="service-card">
-      <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">📤</div>
-          <div>
-            <div class="service-title">PeppyDrop (File & Photo Drop)</div>
-            <div class="service-sub">Direct Wi-Fi Local Sharing</div>
-          </div>
-        </div>
-        <div class="badge-status"><span class="status-dot"></span> Ready</div>
-      </div>
-      <p class="service-desc">Transfer photos and files from your device directly to home storage without WhatsApp compression or cloud accounts.</p>
-      <button onclick="switchTab('files', document.querySelectorAll('.tab-btn')[3])" class="btn-secondary" style="width: 100%;">
-        Open File Drop Zone →
-      </button>
-    </div>
+<!-- Admin Management Bar (Admin Only) -->
+<div class="admin-bar" id="adminBar">
+  <button class="admin-pill-btn" onclick="openModal('adminUsersModal')">👥 User Accounts</button>
+  <button class="admin-pill-btn" onclick="openModal('adminAlbumsModal')">📁 Album Permissions</button>
+  <button class="admin-pill-btn" onclick="openModal('adminImportModal')">📥 Import Photos</button>
+</div>
 
-    <!-- First Time Connect Card -->
-    <div class="service-card" style="text-align: center; border-color: rgba(0,229,255,0.25);">
-      <div style="font-size: 26px; margin-bottom: 6px;">📱</div>
-      <div style="font-weight: 700; font-size: 16px;">Invite Family & Guests</div>
-      <p style="font-size: 12.5px; color: var(--text-muted); margin: 6px 0 14px;">
-        Point any camera at the QR code to open Peppy Home Hub on any phone connected to our Wi-Fi.
+<!-- Main App Container -->
+<main class="container">
+
+  <!-- ══════════════ TAB 1: HOME ══════════════ -->
+  <section class="tab-pane active" id="tab-home">
+    <!-- Greeting Card -->
+    <div class="card" style="background: linear-gradient(135deg, #101524 0%, #151d32 100%); border-color: rgba(14, 165, 233, 0.3);">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--accent); letter-spacing: 1px;">
+        Local Home Cloud
+      </div>
+      <h2 style="font-size: 24px; font-weight: 800; margin: 4px 0 6px;" id="homeGreeting">Welcome Home</h2>
+      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+        Your central gateway for movies, private photo albums, local file sharing, and games. Connected via your secure home Wi-Fi network.
       </p>
-      <button onclick="switchTab('status', document.querySelectorAll('.tab-btn')[4])" class="btn-secondary">
-        Show Hub QR Code & Network Status
-      </button>
+    </div>
+
+    <!-- Live Services Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 16px;">
+      <!-- Movies Card -->
+      <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon">🍿</div>
+            <div>
+              <div class="card-title">Movies & TV</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Jellyfin Media Server</div>
+            </div>
+          </div>
+          <span class="status-badge" id="badgeJf"><span class="status-dot"></span> Checking</span>
+        </div>
+        <p class="card-desc">Stream full HD & 4K movies and shows from our home library without internet buffering.</p>
+        <a href="#" id="homeJfLaunch" target="_blank" class="btn-primary">Launch Cinema →</a>
+      </div>
+
+      <!-- Photos Card -->
+      <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+          <div class="card-title-group" style="display:flex; align-items:center; gap:12px;">
+            <div class="card-icon">🖼️</div>
+            <div>
+              <div class="card-title">Peppy Photos</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Google Photos-Inspired Library</div>
+            </div>
+          </div>
+          <span class="status-badge"><span class="status-dot"></span> Private</span>
+        </div>
+        <p class="card-desc">Browse family albums, trips, and memories securely. Protected by account-level permissions.</p>
+        <button onclick="switchTab('photos')" class="btn-primary" style="background: #2563eb;">Open Photos →</button>
+      </div>
+    </div>
+
+    <!-- Quick Shortcuts Row -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+      <!-- Minecraft -->
+      <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon">⛏️</div>
+            <div>
+              <div class="card-title">Minecraft Server</div>
+              <div style="font-size: 11px; color: var(--text-muted);">PaperMC Java & Bedrock</div>
+            </div>
+          </div>
+          <span class="status-badge" id="badgeMc"><span class="status-dot"></span> Checking</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; font-family: monospace;">
+          IP: <span id="homeMcIp">--:25565</span>
+        </div>
+        <button onclick="switchTab('minecraft')" class="btn-secondary" style="width: 100%;">View Join Guide & Port Info</button>
+      </div>
+
+      <!-- File Drop -->
+      <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <div class="card-icon">📤</div>
+            <div>
+              <div class="card-title">File Drop</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Fast Local Sharing</div>
+            </div>
+          </div>
+          <span class="status-badge"><span class="status-dot"></span> Ready</span>
+        </div>
+        <p class="card-desc">Send photos or documents directly to home storage without third-party cloud apps.</p>
+        <button onclick="switchTab('files')" class="btn-secondary" style="width: 100%;">Drop Files →</button>
+      </div>
     </div>
   </section>
 
-  <!-- ══════════════ TAB 2: MOVIES & TV ══════════════ -->
-  <section class="tab-content" id="tab-movies">
-    <div class="service-card card-jellyfin">
+  <!-- ══════════════ TAB 2: PEPPY PHOTOS ══════════════ -->
+  <section class="tab-pane" id="tab-photos">
+    <div class="photos-header">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700;">Peppy Photos</h2>
+        <p style="font-size: 12px; color: var(--text-muted);">Chronological timeline of your authorized memories</p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="fetchPhotos()" class="btn-secondary">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Album filter bar -->
+    <div class="album-pills" id="albumPills">
+      <div class="album-pill active" onclick="filterAlbum(null, this)">All Photos</div>
+    </div>
+
+    <!-- Timeline Container -->
+    <div id="photosTimeline" style="margin-top: 14px;">
+      <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 40px 0;">
+        Loading photo library...
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ TAB 3: MOVIES & TV ══════════════ -->
+  <section class="tab-pane" id="tab-movies">
+    <div class="card">
       <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">🍿</div>
+        <div class="card-title-wrap">
+          <div class="card-icon">🍿</div>
           <div>
-            <div class="service-title">Movies & TV Series</div>
-            <div class="service-sub">Jellyfin Media Center</div>
+            <div class="card-title">Movies & TV Series</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Jellyfin Media Streaming</div>
           </div>
         </div>
-        <div class="badge-status" id="moviesStatusBadge"><span class="status-dot"></span> Checking</div>
+        <span class="status-badge" id="tabBadgeJf"><span class="status-dot"></span> Checking</span>
       </div>
-      <p class="service-desc">Browse and stream movies and shows from our home library. Works on mobile phones, tablets, PCs, and Smart TVs.</p>
+      <p class="card-desc">Browse and stream movies and shows from our home library. Works on web browsers, phones, tablets, and Smart TVs.</p>
       
-      <a href="#" id="moviesLaunchBtn" target="_blank" class="btn-primary" style="margin-bottom: 12px;">
-        🎬 Open Movies & TV (Jellyfin)
+      <a href="#" id="moviesLaunchDirect" target="_blank" class="btn-primary" style="margin-bottom: 12px;">
+        Open Jellyfin Web Player →
       </a>
-
-      <button onclick="copyText(`http://${serverIP}:8096`, 'Jellyfin URL')" class="btn-secondary" style="width: 100%; margin-bottom: 16px;">
-        📋 Copy Jellyfin Streamer URL
+      <button onclick="copyText(serverJfUrl, 'Jellyfin URL')" class="btn-secondary" style="width: 100%; margin-bottom: 16px;">
+        📋 Copy Streamer URL: <span id="jfUrlDisplay" style="font-family: monospace;">http://...:8096</span>
       </button>
 
-      <!-- Guest Login Help Accordion -->
-      <div class="accordion-box open">
-        <div class="accordion-header" onclick="toggleAcc(this)">
-          <span>🔑 Jellyfin Guest Sign-In Help</span>
-          <span class="acc-arrow">▼</span>
-        </div>
-        <div class="accordion-body">
-          <p>• <strong>Guests:</strong> Ask the home server administrator for the family or guest account details to sign in.</p>
-          <p style="margin-top: 6px;">• <strong>Smart TV & Jellyfin App:</strong> Install the free <em>Jellyfin</em> app on Android TV/Firestick/Apple TV and enter the server address: <code id="jfCodeAddr" style="color:var(--cyan)">http://...:8096</code></p>
-          <p style="margin-top: 6px; font-size: 11px; color:#94a3b8;">* Passwords are never embedded in URLs for your family's account security.</p>
-        </div>
-      </div>
-
-      <!-- Offline Troubleshooting -->
-      <div class="accordion-box" id="jfTroubleBox" style="margin-top: 10px;">
-        <div class="accordion-header" onclick="toggleAcc(this)">
-          <span>🛠️ Troubleshooting Connection</span>
-          <span class="acc-arrow">▼</span>
-        </div>
-        <div class="accordion-body">
-          <p>If Jellyfin says <strong>Offline</strong>:</p>
-          <p>1. Ensure your device is connected to the primary home Wi-Fi network.</p>
-          <p>2. Ask the server administrator to verify Jellyfin is started in Termux.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════════ TAB 3: MINECRAFT ══════════════ -->
-  <section class="tab-content" id="tab-minecraft">
-    <div class="service-card card-minecraft">
-      <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">⛏️</div>
-          <div>
-            <div class="service-title">Minecraft Server</div>
-            <div class="service-sub">PaperMC Survival Multiplayer</div>
-          </div>
-        </div>
-        <div class="badge-status" id="mcStatusBadge"><span class="status-dot"></span> Checking</div>
-      </div>
-      <p class="service-desc">Welcome to our home survival realm! Builds, progression, and inventories are saved persistently.</p>
-
-      <!-- Connection Details -->
-      <div class="spec-grid">
-        <div class="spec-card" onclick="copyText(serverIP + ':25565', 'Java Server IP')">
-          <div class="spec-label">Java Edition (PC / Mac)</div>
-          <div class="spec-val"><span id="mcTabJavaIp">--:25565</span> 📋</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click to copy address</div>
-        </div>
-        <div class="spec-card" onclick="copyText(serverIP, 'Bedrock IP (Port: 19132)')">
-          <div class="spec-label">Bedrock (Phone, Console, iPad)</div>
-          <div class="spec-val">Port: 19132 📋</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Server IP: <span id="mcTabBedrockIp">--</span></div>
-        </div>
-      </div>
-
-      <!-- Step by step join guide -->
-      <div class="accordion-box open">
-        <div class="accordion-header" onclick="toggleAcc(this)">
-          <span>📖 How to Join for the First Time</span>
-          <span class="acc-arrow">▼</span>
-        </div>
-        <div class="accordion-body">
-          <p><strong>Java Edition (PC/Mac):</strong></p>
-          <p>1. Open Minecraft ➔ Multiplayer ➔ Add Server.</p>
-          <p>2. Paste the Server Address copied above and hit <em>Done</em>.</p>
-          <p style="margin-top: 8px;"><strong>Bedrock Edition (iPhone, Android, Windows):</strong></p>
-          <p>1. Open Minecraft ➔ Play ➔ Servers ➔ Add Server.</p>
-          <p>2. Server Address: <code style="color:var(--cyan)" id="mcBedrockCode">--</code> | Port: <code style="color:var(--cyan)">19132</code>.</p>
-        </div>
-      </div>
-
-      <!-- Dashboard & Bot launcher -->
-      <div style="margin-top: 14px;">
-        <a href="#" id="mcTabDashboardBtn" target="_blank" class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
-          🤖 Open PocketMC Web Console & Peppy Bot →
-        </a>
+      <!-- Guest Sign-in Guide -->
+      <div style="background: var(--card-inner); border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 14px; font-size: 12.5px; line-height: 1.55; color: var(--text-secondary);">
+        <div style="font-weight: 700; color: #fff; margin-bottom: 6px;">🔑 Guest Sign-In Help</div>
+        <p>• <strong>Guest Accounts:</strong> Contact the server host for an account username and password.</p>
+        <p style="margin-top: 4px;">• <strong>Smart TV & Firestick:</strong> Download the official <em>Jellyfin</em> app from the TV app store and enter the URL copied above.</p>
+        <p style="margin-top: 6px; font-size: 11px; color: var(--text-muted);">* Passwords are never placed in URLs for your family account security.</p>
       </div>
     </div>
   </section>
 
   <!-- ══════════════ TAB 4: FILE DROP ══════════════ -->
-  <section class="tab-content" id="tab-files">
-    <div class="service-card">
+  <section class="tab-pane" id="tab-files">
+    <div class="card">
       <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">📤</div>
+        <div class="card-title-wrap">
+          <div class="card-icon">📤</div>
           <div>
-            <div class="service-title">PeppyDrop</div>
-            <div class="service-sub">High-Speed Local File Sharing</div>
+            <div class="card-title">Peppy File Drop</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Direct Local Wi-Fi Sharing</div>
           </div>
         </div>
-        <div class="badge-status"><span class="status-dot"></span> Ready</div>
+        <span class="status-badge"><span class="status-dot"></span> Protected</span>
       </div>
-      <p class="service-desc">Direct Wi-Fi file upload. Files are stored securely on the server's storage without third-party cloud uploads.</p>
+      <p class="card-desc">Transfer documents, photos, or video clips directly to the home server. Files are organized securely.</p>
 
       <!-- Dropzone -->
-      <div class="dropzone" id="dropZone" onclick="document.getElementById('fileUploadInput').click()">
-        <div class="drop-icon">📁</div>
-        <div class="drop-main">Tap to choose or drag & drop files here</div>
-        <div class="drop-sub">Photos, videos, or documents (up to 200MB per batch)</div>
-        <input type="file" id="fileUploadInput" class="file-input" multiple onchange="uploadFiles(this.files)">
+      <div class="dropzone" id="fileDropZone" onclick="document.getElementById('fileInput').click()">
+        <div style="font-size: 36px; margin-bottom: 8px;">📁</div>
+        <div style="font-weight: 700; font-size: 14px;">Tap or drag & drop files here</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Select visibility:</div>
+        <div style="margin-top: 10px; display: inline-flex; gap: 8px;" onclick="event.stopPropagation();">
+          <select id="dropVisibility" class="form-select" style="width: auto; padding: 4px 8px; font-size: 12px;">
+            <option value="public">Shared with Household</option>
+            <option value="private">Private (Only Me & Admin)</option>
+          </select>
+        </div>
+        <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileUpload(this.files)">
       </div>
 
-      <!-- Upload Progress Box -->
-      <div class="upload-progress-box" id="uploadProgBox">
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;">
+      <!-- Progress -->
+      <div id="fileUploadProgress" style="display: none; margin-top: 14px;">
+        <div style="display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 600;">
           <span id="uploadLabel">Uploading...</span>
-          <span id="uploadPercentage" style="color:var(--cyan)">0%</span>
+          <span id="uploadPct" style="color: var(--accent);">0%</span>
         </div>
-        <div class="progress-track">
-          <div class="progress-bar" id="progressBar"></div>
+        <div style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; margin-top: 6px;">
+          <div id="uploadBar" style="height: 100%; width: 0%; background: var(--accent); transition: width 0.2s;"></div>
         </div>
       </div>
 
-      <!-- Dropped files list -->
-      <div class="section-heading" style="margin-top: 20px;">Shared Files on Server</div>
-      <div class="file-list" id="filesContainer">
-        <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 14px;">Loading files...</div>
+      <!-- File Table -->
+      <div style="margin-top: 24px;">
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Available Files</div>
+        <div id="fileListWrap">
+          <table class="file-table" id="fileTable">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Size</th>
+                <th>Uploader</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="fileTableBody">
+              <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading files...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ══════════════ TAB 5: STATUS ══════════════ -->
-  <section class="tab-content" id="tab-status">
-    <div class="service-card">
+  <!-- ══════════════ TAB 5: MINECRAFT ══════════════ -->
+  <section class="tab-pane" id="tab-minecraft">
+    <div class="card">
       <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">📊</div>
+        <div class="card-title-wrap">
+          <div class="card-icon">⛏️</div>
           <div>
-            <div class="service-title">Server Telemetry & QR</div>
-            <div class="service-sub">Real-Time Phone & Service Health</div>
+            <div class="card-title">Minecraft Server</div>
+            <div style="font-size: 12px; color: var(--text-muted);">PaperMC Survival World</div>
           </div>
         </div>
-        <div class="badge-status" id="lastCheckTag">Checking</div>
+        <span class="status-badge" id="tabBadgeMc"><span class="status-dot"></span> Checking</span>
       </div>
+      <p class="card-desc">Our persistent 24/7 multiplayer server. All builds, player items, and progress are preserved.</p>
 
-      <!-- Metrics -->
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-label">Battery Level</div>
-          <div class="metric-value" id="statBattery">--%</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+        <div class="card" style="padding: 12px; margin-bottom: 0; background: var(--card-inner); cursor: pointer;" onclick="copyText(serverIP + ':25565', 'Java Server IP')">
+          <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Java Edition (PC)</div>
+          <div style="font-size: 13px; font-weight: 700; font-family: monospace; margin-top: 4px;" id="mcJavaDisplay">--:25565 📋</div>
         </div>
-        <div class="metric-box">
-          <div class="metric-label">Storage Free</div>
-          <div class="metric-value" id="statStorage">-- GB</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">Local IP</div>
-          <div class="metric-value" id="statIp" style="font-size: 14px; font-family: monospace;">--</div>
+        <div class="card" style="padding: 12px; margin-bottom: 0; background: var(--card-inner); cursor: pointer;" onclick="copyText(serverIP, 'Bedrock IP (Port 19132)')">
+          <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Bedrock (Phone/Xbox)</div>
+          <div style="font-size: 13px; font-weight: 700; font-family: monospace; margin-top: 4px;">Port: 19132 📋</div>
         </div>
       </div>
 
-      <!-- Real Services Health Checklist -->
-      <div class="section-heading">Service Availability</div>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <div class="file-row">
-          <span>🍿 Jellyfin Media Server</span>
-          <span class="badge-status" id="chkJf"><span class="status-dot"></span> Checking</span>
-        </div>
-        <div class="file-row">
-          <span>⛏️ Minecraft Java Server (:25565)</span>
-          <span class="badge-status" id="chkMc"><span class="status-dot"></span> Checking</span>
-        </div>
-        <div class="file-row">
-          <span>🎮 Minecraft Bedrock (:19132)</span>
-          <span class="badge-status" id="chkBedrock"><span class="status-dot"></span> Checking</span>
-        </div>
-        <div class="file-row">
-          <span>🤖 Peppy AI Bot (:8089)</span>
-          <span class="badge-status" id="chkBot"><span class="status-dot"></span> Checking</span>
-        </div>
-        <div class="file-row">
-          <span>⚙️ PocketMC Dashboard (:8088)</span>
-          <span class="badge-status" id="chkDash"><span class="status-dot"></span> Checking</span>
-        </div>
+      <!-- Join Guide -->
+      <div style="background: var(--card-inner); border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 14px; font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 14px;">
+        <div style="font-weight: 700; color: #fff; margin-bottom: 6px;">📖 Join Instructions</div>
+        <p>1. Ensure your PC or mobile device is connected to our home Wi-Fi.</p>
+        <p>2. Open Minecraft ➔ Multiplayer ➔ Add Server.</p>
+        <p>3. Enter the server IP copied above and click Join.</p>
       </div>
 
-      <!-- QR Code Section -->
-      <div class="section-heading" style="margin-top: 24px;">Scan to Open Portal</div>
-      <div class="qr-box">
-        <div style="font-weight: 700; font-size: 15px;">Connect with QR Code</div>
-        <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 10px;">
-          Scan while connected to home Wi-Fi to open this portal instantly.
-        </p>
-        <div class="qr-frame">
-          <div id="hubQrCode"></div>
-        </div>
-        <div style="font-family: monospace; font-size: 13px; color: var(--cyan); font-weight: 700;" id="qrUrlDisplay">
-          http://...
-        </div>
-        <div style="margin-top: 10px;">
-          <button onclick="copyText(portalUrl, 'Hub Address')" class="btn-secondary">
-            📋 Copy Hub Link
-          </button>
-        </div>
-      </div>
+      <a href="#" id="mcDashboardLaunch" target="_blank" class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+        🤖 Open PocketMC Web Console & Peppy Bot →
+      </a>
     </div>
   </section>
 
-  <!-- ══════════════ TAB 6: HELP & FAQ ══════════════ -->
-  <section class="tab-content" id="tab-help">
-    <div class="service-card">
+  <!-- ══════════════ TAB 6: STATUS ══════════════ -->
+  <section class="tab-pane" id="tab-status">
+    <div class="card">
       <div class="card-header">
-        <div class="card-title-group">
-          <div class="service-icon">❓</div>
+        <div class="card-title-wrap">
+          <div class="card-icon">📊</div>
           <div>
-            <div class="service-title">Help & Getting Started</div>
-            <div class="service-sub">Frequently Asked Questions</div>
+            <div class="card-title">Server Telemetry & QR</div>
+            <div style="font-size: 12px; color: var(--text-muted);">Real-Time Phone & Service Health</div>
           </div>
         </div>
+        <div style="font-size: 11.5px; color: var(--text-muted);" id="statusCheckTime">Live</div>
       </div>
 
-      <div class="section-heading">Quick 3-Step Start</div>
-      <div style="background: var(--card-inner); border: 1px solid var(--border); border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; color: #cbd5e1; margin-bottom: 16px;">
-        <p>1. <strong>Connect to Home Wi-Fi:</strong> Ensure you are on the primary family Wi-Fi network.</p>
-        <p>2. <strong>Choose Your Service:</strong> Tap <em>Movies & TV</em> for cinema, or <em>Minecraft</em> to play.</p>
-        <p>3. <strong>Need Help?</strong> Contact the home server admin if you need personal credentials.</p>
-      </div>
-
-      <div class="section-heading">Common Questions</div>
-
-      <div class="faq-item open">
-        <div class="faq-q" onclick="toggleFaq(this)">
-          <span>Why does a service say "Offline"?</span>
-          <span class="faq-arrow">▼</span>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 18px;">
+        <div class="card" style="padding: 14px; margin-bottom: 0; background: var(--card-inner); text-align: center;">
+          <div style="font-size: 11px; color: var(--text-muted);">Battery</div>
+          <div style="font-size: 20px; font-weight: 800; margin-top: 4px;" id="metricBatt">--%</div>
         </div>
-        <div class="faq-a">
-          The server runs health checks in real time. If Minecraft or Jellyfin is offline, the service process may simply be stopped. Ask the host to start it via Termux.
+        <div class="card" style="padding: 14px; margin-bottom: 0; background: var(--card-inner); text-align: center;">
+          <div style="font-size: 11px; color: var(--text-muted);">Storage Free</div>
+          <div style="font-size: 20px; font-weight: 800; margin-top: 4px;" id="metricStorage">-- GB</div>
+        </div>
+        <div class="card" style="padding: 14px; margin-bottom: 0; background: var(--card-inner); text-align: center;">
+          <div style="font-size: 11px; color: var(--text-muted);">Hub IP</div>
+          <div style="font-size: 14px; font-weight: 700; font-family: monospace; margin-top: 6px;" id="metricIp">--</div>
         </div>
       </div>
 
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">
-          <span>The page isn't opening on another device</span>
-          <span class="faq-arrow">▼</span>
+      <!-- QR Code -->
+      <div style="text-align: center; padding: 20px; background: var(--card-inner); border: 1px solid var(--card-border); border-radius: var(--radius-md);">
+        <div style="font-weight: 700; font-size: 14px;">Scan to Open Peppy Home Hub</div>
+        <p style="font-size: 11.5px; color: var(--text-muted); margin: 4px 0 12px;">Scan while connected to home Wi-Fi to enter.</p>
+        <div style="display: inline-block; background: #fff; padding: 12px; border-radius: 12px;">
+          <div id="hubQr"></div>
         </div>
-        <div class="faq-a">
-          Ensure you are connected to the exact same home Wi-Fi network. If your router has "Guest Isolation" or "AP Isolation" enabled, devices cannot communicate directly.
-        </div>
+        <div style="font-family: monospace; font-size: 12px; color: var(--accent); margin-top: 8px;" id="qrUrl">http://...</div>
       </div>
+    </div>
+  </section>
 
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">
-          <span>Can I access this outside the house?</span>
-          <span class="faq-arrow">▼</span>
-        </div>
-        <div class="faq-a">
-          By design, this hub is locked to the local home Wi-Fi for speed, privacy, and security. Remote access is only possible if the host configures a private tunnel (like Playit).
-        </div>
-      </div>
+  <!-- ══════════════ TAB 7: HELP ══════════════ -->
+  <section class="tab-pane" id="tab-help">
+    <div class="card">
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">Frequently Asked Questions</h3>
 
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)">
-          <span>How do I upload files from my phone?</span>
-          <span class="faq-arrow">▼</span>
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+        <div class="card" style="padding: 14px; margin-bottom: 0; background: var(--card-inner);">
+          <div style="font-weight: 700; color: #fff;">How do I access photos?</div>
+          <p style="color: var(--text-secondary); margin-top: 4px;">Sign in with your family account using the button at the top right. Each account is granted access to specific photo albums.</p>
         </div>
-        <div class="faq-a">
-          Go to the <strong>File Drop</strong> tab, tap the box, choose your photos or videos, and they will upload directly to the server at full Wi-Fi speed.
+        <div class="card" style="padding: 14px; margin-bottom: 0; background: var(--card-inner);">
+          <div style="font-weight: 700; color: #fff;">Why can't another device connect?</div>
+          <p style="color: var(--text-secondary); margin-top: 4px;">Ensure both devices are on the exact same Wi-Fi SSID. If your router has "AP/Client Isolation" enabled, devices cannot communicate locally.</p>
+        </div>
+        <div class="card" style="padding: 14px; margin-bottom: 0; background: var(--card-inner);">
+          <div style="font-weight: 700; color: #fff;">Is my data private?</div>
+          <p style="color: var(--text-secondary); margin-top: 4px;">Yes. Peppy Home Hub runs strictly on your phone server without transmitting personal photos or files to any external cloud.</p>
         </div>
       </div>
     </div>
   </section>
 
+</main>
+
+<!-- ══════════════ LIGHTBOX PHOTO VIEWER ══════════════ -->
+<div class="lightbox" id="lightbox">
+  <div class="lb-topbar">
+    <span class="lb-counter" id="lbCounter">1 of 1</span>
+    <div class="lb-actions">
+      <button class="lb-btn" onclick="toggleFavCurrentPhoto()" title="Favorite">❤️</button>
+      <a href="#" id="lbDownloadBtn" class="lb-btn" title="Download" download>⬇️</a>
+      <button class="lb-btn" onclick="closeLightbox()" title="Close">✕</button>
+    </div>
+  </div>
+  <div class="lb-main">
+    <button class="lb-nav lb-prev" onclick="prevPhoto()">‹</button>
+    <img src="" id="lbImg" class="lb-img" alt="Photo">
+    <button class="lb-nav lb-next" onclick="nextPhoto()">›</button>
+  </div>
+  <div class="lb-footer" id="lbFooter">
+    <span id="lbCaption"></span> · <span id="lbDate"></span>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <h3 class="modal-title">Sign In to Peppy Home Hub</h3>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="loginUser" class="form-input" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="loginPass" class="form-input" required>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top: 8px;">Sign In</button>
+      <button type="button" onclick="closeModal('loginModal')" class="btn-secondary" style="width: 100%; margin-top: 8px;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Account Info Modal -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal-box">
+    <h3 class="modal-title">My Account</h3>
+    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+      <div>Username: <strong style="color: #fff;" id="accModalUser">--</strong></div>
+      <div>Display Name: <strong style="color: #fff;" id="accModalName">--</strong></div>
+      <div>Role: <strong style="color: var(--accent);" id="accModalRole">--</strong></div>
+    </div>
+    <button onclick="handleLogout()" class="btn-danger" style="width: 100%; padding: 10px;">Sign Out</button>
+    <button type="button" onclick="closeModal('accountModal')" class="btn-secondary" style="width: 100%; margin-top: 8px;">Close</button>
+  </div>
+</div>
+
+<!-- Admin: User Management Modal -->
+<div class="modal-overlay" id="adminUsersModal">
+  <div class="modal-box" style="max-width: 560px;">
+    <h3 class="modal-title">👥 User Accounts Management</h3>
+
+    <!-- Create User Form -->
+    <form onsubmit="handleCreateUser(event)" style="background: var(--card-inner); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px;">
+      <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 10px;">Create New User Account</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <input type="text" id="newUsername" class="form-input" placeholder="Username" required>
+        <input type="password" id="newPassword" class="form-input" placeholder="Password (min 6 chars)" required>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+        <input type="text" id="newDisplayName" class="form-input" placeholder="Display Name">
+        <select id="newRole" class="form-select">
+          <option value="member">Member</option>
+          <option value="guest">Guest</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top: 10px; padding: 8px;">Create Account</button>
+    </form>
+
+    <!-- User List -->
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">Existing Accounts</div>
+    <div id="adminUserList" style="display: flex; flex-direction: column; gap: 6px;">Loading users...</div>
+
+    <button type="button" onclick="closeModal('adminUsersModal')" class="btn-secondary" style="width: 100%; margin-top: 16px;">Close</button>
+  </div>
+</div>
+
+<!-- Admin: Albums & Permissions Modal -->
+<div class="modal-overlay" id="adminAlbumsModal">
+  <div class="modal-box" style="max-width: 560px;">
+    <h3 class="modal-title">📁 Album Permissions</h3>
+
+    <!-- Create Album -->
+    <form onsubmit="handleCreateAlbum(event)" style="background: var(--card-inner); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px;">
+      <div style="font-weight: 700; font-size: 12.5px; margin-bottom: 10px;">Create Album</div>
+      <input type="text" id="albumTitle" class="form-input" placeholder="Album Title (e.g. Family Trip 2026)" required>
+      <input type="text" id="albumDesc" class="form-input" placeholder="Description" style="margin-top: 6px;">
+      <div style="margin-top: 6px;">
+        <select id="albumPolicy" class="form-select">
+          <option value="restricted">Restricted (Assigned users only)</option>
+          <option value="public">Public (All household members)</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top: 10px; padding: 8px;">Create Album</button>
+    </form>
+
+    <!-- Album Permission Assignment -->
+    <div style="font-weight: 700; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Assign User Access to Album</div>
+    <div class="form-group">
+      <select id="permAlbumSelect" class="form-select" onchange="loadAlbumPerms()"></select>
+    </div>
+    <div class="form-group">
+      <select id="permUserSelect" class="form-select"></select>
+    </div>
+    <button onclick="saveAlbumPerm()" class="btn-primary" style="padding: 8px; margin-bottom: 16px;">Grant View & Download</button>
+
+    <div id="albumPermsList" style="font-size: 12px; color: var(--text-secondary);"></div>
+
+    <button type="button" onclick="closeModal('adminAlbumsModal')" class="btn-secondary" style="width: 100%; margin-top: 16px;">Close</button>
+  </div>
+</div>
+
+<!-- Admin: Import Photos Modal -->
+<div class="modal-overlay" id="adminImportModal">
+  <div class="modal-box" style="max-width: 560px;">
+    <h3 class="modal-title">📥 Import Photos from Storage</h3>
+    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+      Safely import photos from an approved phone storage folder into Peppy Photos library. Original files will not be deleted.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label">Approved Storage Source</label>
+      <select id="importSourceSelect" class="form-select" onchange="browseImportFolder()"></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Assign to Album (Optional)</label>
+      <select id="importAlbumSelect" class="form-select"></select>
+    </div>
+
+    <div style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between;">
+      <span>Available Photos to Import</span>
+      <span id="importCountSelected" style="color: var(--accent);">0 selected</span>
+    </div>
+
+    <div id="importFilesBox" style="max-height: 200px; overflow-y: auto; background: var(--card-inner); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 8px; font-size: 12px;">
+      Select an approved source to scan.
+    </div>
+
+    <button onclick="executePhotoImport()" class="btn-primary" style="margin-top: 14px; padding: 10px;" id="importSubmitBtn">
+      Import Selected Photos
+    </button>
+    <button type="button" onclick="closeModal('adminImportModal')" class="btn-secondary" style="width: 100%; margin-top: 8px;">Cancel</button>
+  </div>
 </div>
 
 <div class="toast" id="toast">Message</div>
 
 <script>
+  let currentUser = null;
   let serverIP = window.location.hostname || '127.0.0.1';
-  let portalUrl = window.location.origin;
+  let serverJfUrl = `http://${serverIP}:8096`;
+  let currentPhotosList = [];
+  let currentPhotoIdx = 0;
+  let activeAlbumFilter = null;
+  let allAlbums = [];
+  let allUsers = [];
 
-  // Live clock
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('liveClock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  }
-  setInterval(updateClock, 1000);
-  updateClock();
-
-  // Navigation tab switcher
-  function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    const target = document.getElementById('tab-' + tabId);
-    if (target) target.classList.add('active');
-    if (btn) btn.classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (tabId === 'files') fetchFiles();
-  }
-
-  function toggleAcc(el) {
-    el.parentElement.classList.toggle('open');
-  }
-
-  function toggleFaq(el) {
-    el.parentElement.classList.toggle('open');
-  }
-
+  // Toast
   function toast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2400);
+    setTimeout(() => t.classList.remove('show'), 2600);
   }
 
   function copyText(str, label) {
-    navigator.clipboard.writeText(str).then(() => toast('Copied ' + label + ': ' + str)).catch(() => toast('Copy: ' + str));
+    navigator.clipboard.writeText(str).then(() => toast('Copied ' + label)).catch(() => toast('Copied: ' + str));
   }
 
-  // Initialize QR Code
-  let qrCodeInstance = null;
-  function renderQrCode(url) {
-    const el = document.getElementById("hubQrCode");
-    el.innerHTML = "";
-    qrCodeInstance = new QRCode(el, {
-      text: url,
-      width: 170,
-      height: 170,
-      colorDark: "#060810",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.M
-    });
+  // Modals
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    if (id === 'adminUsersModal') loadAdminUsers();
+    if (id === 'adminAlbumsModal') loadAdminAlbums();
+    if (id === 'adminImportModal') loadImportSources();
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
   }
 
-  // Live Health Checks and Telemetry
-  async function fetchStatus() {
+  // Tab switcher
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    const pane = document.getElementById('tab-' + tabId);
+    const nav = document.getElementById('nav-' + tabId);
+    if (pane) pane.classList.add('active');
+    if (nav) nav.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (tabId === 'photos') fetchPhotos();
+    if (tabId === 'files') fetchFiles();
+  }
+
+  // Auth: Check Session
+  async function checkAuth() {
     try {
-      const res = await fetch('/api/status');
+      const res = await fetch('/api/auth/me');
       const data = await res.json();
+      if (data.authenticated && data.user) {
+        currentUser = data.user;
+        document.getElementById('unauthBtn').style.display = 'none';
+        document.getElementById('authPill').style.display = 'flex';
+        document.getElementById('userDisplayName').textContent = currentUser.display_name || currentUser.username;
+        const badge = document.getElementById('userRoleBadge');
+        badge.textContent = currentUser.role;
+        badge.className = 'role-badge ' + (currentUser.role === 'admin' ? 'admin' : '');
 
-      serverIP = data.local_ip || serverIP;
-      portalUrl = `http://${serverIP}:${data.hub_port || 7777}`;
+        document.getElementById('accModalUser').textContent = currentUser.username;
+        document.getElementById('accModalName').textContent = currentUser.display_name || currentUser.username;
+        document.getElementById('accModalRole').textContent = currentUser.role;
 
-      document.getElementById('networkIpPill').textContent = serverIP;
-      document.getElementById('qrUrlDisplay').textContent = portalUrl;
-      document.getElementById('lastCheckTag').textContent = `Checked: ${data.check_time_str || 'now'}`;
-
-      // Update service links
-      const jfUrl = `http://${serverIP}:8096`;
-      const dashUrl = `http://${serverIP}:8088`;
-
-      document.getElementById('homeJfBtn').href = jfUrl;
-      document.getElementById('moviesLaunchBtn').href = jfUrl;
-      document.getElementById('jfCodeAddr').textContent = jfUrl;
-
-      document.getElementById('homeDashboardBtn').href = dashUrl;
-      document.getElementById('mcTabDashboardBtn').href = dashUrl;
-
-      document.getElementById('homeJavaIp').textContent = `${serverIP}:25565`;
-      document.getElementById('mcTabJavaIp').textContent = `${serverIP}:25565`;
-      document.getElementById('mcTabBedrockIp').textContent = serverIP;
-      document.getElementById('mcBedrockCode').textContent = serverIP;
-
-      // Status tags helper
-      function applyBadge(elId, isOnline) {
-        const el = document.getElementById(elId);
-        if (!el) return;
-        if (isOnline) {
-          el.className = 'badge-status';
-          el.innerHTML = '<span class="status-dot"></span> Online';
+        // Admin controls
+        if (currentUser.role === 'admin') {
+          document.getElementById('adminBar').classList.add('visible');
         } else {
-          el.className = 'badge-status offline';
-          el.innerHTML = '<span class="status-dot red"></span> Offline';
+          document.getElementById('adminBar').classList.remove('visible');
         }
+        document.getElementById('homeGreeting').textContent = `Welcome, ${currentUser.display_name || currentUser.username}`;
+      } else {
+        currentUser = null;
+        document.getElementById('unauthBtn').style.display = 'block';
+        document.getElementById('authPill').style.display = 'none';
+        document.getElementById('adminBar').classList.remove('visible');
+        document.getElementById('homeGreeting').textContent = "Welcome Home";
       }
-
-      const s = data.services;
-      applyBadge('homeJfBadge', s.jellyfin.online);
-      applyBadge('moviesStatusBadge', s.jellyfin.online);
-      applyBadge('chkJf', s.jellyfin.online);
-
-      applyBadge('homeMcBadge', s.minecraft.online);
-      applyBadge('mcStatusBadge', s.minecraft.online);
-      applyBadge('chkMc', s.minecraft.online);
-      applyBadge('chkBedrock', s.minecraft.bedrock_online);
-
-      applyBadge('chkDash', s.mc_dashboard.online);
-      applyBadge('chkBot', s.peppy_bot.online);
-
-      // System telemetry
-      if (data.metrics) {
-        document.getElementById('statBattery').textContent = `${data.metrics.battery_pct}% (${data.metrics.battery_temp})`;
-        document.getElementById('statStorage').textContent = `${data.metrics.storage_free_gb} GB`;
-        document.getElementById('statIp').textContent = serverIP;
-      }
-
     } catch (e) {
-      document.getElementById('globalStateDot').className = 'status-dot red';
-      document.getElementById('globalStateText').textContent = 'Server Unreachable';
+      currentUser = null;
     }
   }
 
-  // Fetch Dropped Files
-  async function fetchFiles() {
+  // Auth: Login
+  async function handleLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
     try {
-      const res = await fetch('/api/files');
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
       const data = await res.json();
-      const container = document.getElementById('filesContainer');
-
-      if (!data.files || data.files.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 18px;">No files dropped yet today. Tap above to drop your first file!</div>';
-        return;
+      if (res.ok) {
+        toast(`Signed in as ${data.user.display_name || data.user.username}`);
+        closeModal('loginModal');
+        await checkAuth();
+        fetchPhotos();
+        fetchFiles();
+      } else {
+        toast(data.error || 'Login failed');
       }
+    } catch (err) {
+      toast('Connection error during login');
+    }
+  }
 
-      container.innerHTML = data.files.map(f => `
-        <div class="file-row">
-          <div class="file-meta">
-            <span style="font-size: 18px;">📄</span>
-            <div>
-              <div class="file-name" title="${f.name}">${f.name}</div>
-              <div class="file-sub">${f.size} · ${f.date_str}</div>
-            </div>
-          </div>
-          <a href="/download/${encodeURIComponent(f.name)}" class="btn-secondary" style="padding: 6px 12px; font-size: 11px;" download>Download</a>
-        </div>
-      `).join('');
+  // Auth: Logout
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      closeModal('accountModal');
+      toast('Signed out');
+      await checkAuth();
+      fetchPhotos();
+      fetchFiles();
     } catch (e) {}
   }
 
-  // File Upload Handling
-  function uploadFiles(files) {
-    if (!files || files.length === 0) return;
+  // Photos: Fetch authorized photos & albums
+  async function fetchPhotos() {
+    if (!currentUser) {
+      document.getElementById('photosTimeline').innerHTML = `
+        <div style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+          <div style="font-size: 32px; margin-bottom: 8px;">🔒</div>
+          <div style="font-weight: 700; color: #fff;">Private Photo Library</div>
+          <p style="font-size: 12.5px; margin-top: 4px;">Sign in with your account to view your authorized family albums.</p>
+          <button onclick="openModal('loginModal')" class="btn-primary" style="max-width: 180px; margin: 14px auto 0;">Sign In</button>
+        </div>
+      `;
+      return;
+    }
 
+    try {
+      // Fetch albums
+      const aRes = await fetch('/api/albums');
+      const aData = await aRes.json();
+      allAlbums = aData.albums || [];
+      renderAlbumPills();
+
+      // Fetch photos
+      let url = '/api/photos';
+      if (activeAlbumFilter) url += `?album_id=${activeAlbumFilter}`;
+      const pRes = await fetch(url);
+      const pData = await pRes.json();
+      currentPhotosList = pData.photos || [];
+      renderTimeline(currentPhotosList);
+    } catch (e) {
+      document.getElementById('photosTimeline').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Could not load photos.</div>';
+    }
+  }
+
+  function renderAlbumPills() {
+    const wrap = document.getElementById('albumPills');
+    let html = `<div class="album-pill ${activeAlbumFilter === null ? 'active' : ''}" onclick="filterAlbum(null, this)">All Photos</div>`;
+    allAlbums.forEach(a => {
+      const isAct = activeAlbumFilter === a.id;
+      html += `<div class="album-pill ${isAct ? 'active' : ''}" onclick="filterAlbum(${a.id}, this)">📁 ${a.title} (${a.photo_count || 0})</div>`;
+    });
+    wrap.innerHTML = html;
+  }
+
+  function filterAlbum(id, el) {
+    activeAlbumFilter = id;
+    document.querySelectorAll('.album-pill').forEach(p => p.classList.remove('active'));
+    if (el) el.classList.add('active');
+    fetchPhotos();
+  }
+
+  function renderTimeline(photos) {
+    const wrap = document.getElementById('photosTimeline');
+    if (!photos || photos.length === 0) {
+      wrap.innerHTML = `
+        <div style="text-align: center; padding: 40px 16px; color: var(--text-muted);">
+          <div style="font-size: 32px; margin-bottom: 8px;">🖼️</div>
+          <div style="font-weight: 700; color: #fff;">No Photos Found</div>
+          <p style="font-size: 12.5px; margin-top: 4px;">
+            ${currentUser.role === 'admin' ? 'Use the Import Photos tool above to add photos from device storage.' : 'No photos have been shared with your account yet.'}
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    // Group by Date (YYYY-MM-DD or Month)
+    const groups = {};
+    photos.forEach((p, idx) => {
+      p._index = idx;
+      const d = p.date_taken || 'Recent Memories';
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(p);
+    });
+
+    let html = '';
+    for (const [dateLabel, groupPhotos] of Object.entries(groups)) {
+      html += `
+        <div class="date-group">
+          <div class="date-title">📅 ${dateLabel}</div>
+          <div class="photo-grid">
+            ${groupPhotos.map(p => `
+              <div class="photo-item" onclick="openLightbox(${p._index})">
+                <img src="/api/photos/${p.id}/thumb" class="photo-thumb" loading="lazy" alt="Photo">
+                ${p.is_favorite ? '<div class="photo-fav-badge">❤️</div>' : ''}
+                ${p.caption ? `<div class="photo-caption-bar">${p.caption}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    wrap.innerHTML = html;
+  }
+
+  // Lightbox Viewer
+  function openLightbox(idx) {
+    if (idx < 0 || idx >= currentPhotosList.length) return;
+    currentPhotoIdx = idx;
+    const p = currentPhotosList[idx];
+
+    document.getElementById('lbCounter').textContent = `${idx + 1} of ${currentPhotosList.length}`;
+    const img = document.getElementById('lbImg');
+    img.src = `/api/photos/${p.id}/view`;
+    document.getElementById('lbCaption').textContent = p.caption || p.filename;
+    document.getElementById('lbDate').textContent = `${p.date_taken || ''} · ${p.size || ''}`;
+    document.getElementById('lbDownloadBtn').href = `/api/photos/${p.id}/download`;
+
+    document.getElementById('lightbox').classList.add('open');
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+
+  function prevPhoto() {
+    if (currentPhotoIdx > 0) openLightbox(currentPhotoIdx - 1);
+  }
+  function nextPhoto() {
+    if (currentPhotoIdx < currentPhotosList.length - 1) openLightbox(currentPhotoIdx + 1);
+  }
+
+  async function toggleFavCurrentPhoto() {
+    const p = currentPhotosList[currentPhotoIdx];
+    if (!p) return;
+    try {
+      const res = await fetch(`/api/photos/${p.id}/favorite`, { method: 'POST' });
+      const data = await res.json();
+      p.is_favorite = data.is_favorite;
+      toast(p.is_favorite ? 'Added to favorites ❤️' : 'Removed from favorites');
+      renderTimeline(currentPhotosList);
+    } catch (e) {}
+  }
+
+  // Keyboard navigation for Lightbox
+  window.addEventListener('keydown', (e) => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') prevPhoto();
+    if (e.key === 'ArrowRight') nextPhoto();
+  });
+
+  // File Drop: List & Upload
+  async function fetchFiles() {
+    const tbody = document.getElementById('fileTableBody');
+    if (!currentUser) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Sign in to access shared files.</td></tr>';
+      return;
+    }
+    try {
+      const res = await fetch('/api/files');
+      const data = await res.json();
+      const files = data.files || [];
+
+      if (files.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No files uploaded yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = files.map(f => {
+        const sizeMb = (f.file_size / (1024*1024)).toFixed(1);
+        const sizeStr = sizeMb >= 1 ? `${sizeMb} MB` : `${(f.file_size/1024).toFixed(0)} KB`;
+        const canDelete = currentUser.role === 'admin' || f.uploaded_by === currentUser.id;
+
+        return `
+          <tr>
+            <td class="file-name-cell" title="${f.filename}">${f.filename}</td>
+            <td style="color: var(--text-muted);">${sizeStr}</td>
+            <td style="color: var(--text-muted);">${f.uploader_name || 'Family'}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <a href="/api/files/${f.id}/download" class="btn-secondary" style="padding: 4px 8px;" download>⬇️</a>
+              ${canDelete ? `<button onclick="deleteFile(${f.id})" class="btn-danger" style="margin-left: 4px; padding: 4px 8px;">🗑️</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Error loading files.</td></tr>';
+    }
+  }
+
+  function handleFileUpload(files) {
+    if (!files || files.length === 0) return;
+    if (!currentUser) {
+      toast('Sign in required to upload files');
+      openModal('loginModal');
+      return;
+    }
+
+    const visibility = document.getElementById('dropVisibility').value;
     const formData = new FormData();
+    formData.append('visibility', visibility);
     for (let i = 0; i < files.length; i++) {
       formData.append('files', files[i]);
     }
 
-    const progBox = document.getElementById('uploadProgBox');
-    const bar = document.getElementById('progressBar');
-    const pct = document.getElementById('uploadPercentage');
+    const progBox = document.getElementById('fileUploadProgress');
+    const bar = document.getElementById('uploadBar');
+    const pct = document.getElementById('uploadPct');
     const label = document.getElementById('uploadLabel');
 
     progBox.style.display = 'block';
@@ -1132,7 +1229,7 @@
     label.textContent = `Uploading ${files.length} file(s)...`;
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload', true);
+    xhr.open('POST', '/api/files/upload', true);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
@@ -1144,41 +1241,302 @@
 
     xhr.onload = () => {
       if (xhr.status === 200) {
-        toast('✅ Upload successful!');
-        label.textContent = 'Upload complete!';
-        setTimeout(() => { progBox.style.display = 'none'; }, 2000);
+        toast('Upload complete!');
+        setTimeout(() => { progBox.style.display = 'none'; }, 1800);
         fetchFiles();
       } else {
-        toast('❌ Upload failed.');
-        label.textContent = 'Upload error.';
+        toast('Upload failed: ' + xhr.responseText);
       }
     };
-
-    xhr.onerror = () => {
-      toast('❌ Connection error during upload.');
-      label.textContent = 'Upload failed.';
-    };
-
+    xhr.onerror = () => toast('Upload network error');
     xhr.send(formData);
   }
 
-  // Drag & drop listeners
-  const dropZone = document.getElementById('dropZone');
-  ['dragenter', 'dragover'].forEach(name => {
-    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  });
-  ['dragleave', 'drop'].forEach(name => {
-    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-  });
-  dropZone.addEventListener('drop', (e) => {
-    uploadFiles(e.dataTransfer.files);
-  });
+  async function deleteFile(id) {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+    try {
+      const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast('File deleted');
+        fetchFiles();
+      } else {
+        toast('Could not delete file');
+      }
+    } catch (e) {}
+  }
+
+  // Status & Telemetry
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/api/public/status');
+      const data = await res.json();
+
+      serverIP = data.local_ip || serverIP;
+      serverJfUrl = data.services.jellyfin.url;
+
+      document.getElementById('homeJfLaunch').href = serverJfUrl;
+      document.getElementById('moviesLaunchDirect').href = serverJfUrl;
+      document.getElementById('jfUrlDisplay').textContent = serverJfUrl;
+
+      document.getElementById('homeMcIp').textContent = data.services.minecraft_java.address;
+      document.getElementById('mcJavaDisplay').textContent = data.services.minecraft_java.address + ' 📋';
+      document.getElementById('mcDashboardLaunch').href = data.services.mc_dashboard.url;
+
+      // Status Badges
+      function setBadge(elId, online) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.className = 'status-badge ' + (online ? '' : 'offline');
+        el.innerHTML = `<span class="status-dot"></span> ${online ? 'Online' : 'Offline'}`;
+      }
+
+      setBadge('badgeJf', data.services.jellyfin.online);
+      setBadge('tabBadgeJf', data.services.jellyfin.online);
+      setBadge('badgeMc', data.services.minecraft_java.online);
+      setBadge('tabBadgeMc', data.services.minecraft_java.online);
+
+      // Metrics
+      document.getElementById('metricBatt').textContent = `${data.metrics.battery_pct}%`;
+      document.getElementById('metricStorage').textContent = `${data.metrics.storage_free_gb} GB`;
+      document.getElementById('metricIp').textContent = serverIP;
+      document.getElementById('statusCheckTime').textContent = `Checked: ${data.time_str}`;
+
+      // Render QR
+      const hubUrl = `http://${serverIP}:${data.hub_port || 7777}`;
+      document.getElementById('qrUrl').textContent = hubUrl;
+      const qrEl = document.getElementById('hubQr');
+      if (qrEl && !qrEl.hasChildNodes()) {
+        new QRCode(qrEl, {
+          text: hubUrl,
+          width: 160, height: 160,
+          colorDark: "#08090e", colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    } catch (e) {}
+  }
+
+  // ── Admin Functions ──
+
+  async function loadAdminUsers() {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      allUsers = data.users || [];
+      const list = document.getElementById('adminUserList');
+
+      list.innerHTML = allUsers.map(u => `
+        <div style="background: var(--card-inner); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="color:#fff;">${u.username}</strong>
+            <span style="font-size: 11px; color: var(--text-muted);">(${u.display_name || 'No Name'}) · ${u.role}</span>
+          </div>
+          <div>
+            ${u.username !== 'admin' ? `<button onclick="deleteUserAccount(${u.id})" class="btn-danger" style="padding: 2px 6px;">Delete</button>` : '<span style="font-size:10px; color:var(--text-muted);">Root</span>'}
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {}
+  }
+
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    const u = document.getElementById('newUsername').value.trim();
+    const p = document.getElementById('newPassword').value;
+    const d = document.getElementById('newDisplayName').value.trim();
+    const r = document.getElementById('newRole').value;
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p, display_name: d, role: r })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast(`User '${u}' created!`);
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+        loadAdminUsers();
+      } else {
+        toast(data.error || 'Failed to create user');
+      }
+    } catch (e) {}
+  }
+
+  async function deleteUserAccount(id) {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast('User deleted');
+        loadAdminUsers();
+      }
+    } catch (e) {}
+  }
+
+  async function loadAdminAlbums() {
+    try {
+      const res = await fetch('/api/albums');
+      const data = await res.json();
+      allAlbums = data.albums || [];
+
+      const select = document.getElementById('permAlbumSelect');
+      select.innerHTML = allAlbums.map(a => `<option value="${a.id}">${a.title} (${a.access_policy})</option>`).join('');
+
+      await loadAdminUsers();
+      const uSelect = document.getElementById('permUserSelect');
+      uSelect.innerHTML = allUsers.map(u => `<option value="${u.id}">${u.username} (${u.display_name})</option>`).join('');
+
+      loadAlbumPerms();
+    } catch (e) {}
+  }
+
+  async function loadAlbumPerms() {
+    const albumId = document.getElementById('permAlbumSelect').value;
+    if (!albumId) return;
+    try {
+      const res = await fetch(`/api/admin/albums/${albumId}/permissions`);
+      const data = await res.json();
+      const list = document.getElementById('albumPermsList');
+      const perms = data.permissions || [];
+      if (perms.length === 0) {
+        list.innerHTML = '<em>No explicit user permissions set yet.</em>';
+        return;
+      }
+      list.innerHTML = perms.map(p => `• <strong>${p.username}</strong>: Can view & download`).join('<br>');
+    } catch (e) {}
+  }
+
+  async function handleCreateAlbum(e) {
+    e.preventDefault();
+    const t = document.getElementById('albumTitle').value.trim();
+    const d = document.getElementById('albumDesc').value.trim();
+    const p = document.getElementById('albumPolicy').value;
+
+    try {
+      const res = await fetch('/api/admin/albums', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: t, description: d, access_policy: p })
+      });
+      if (res.ok) {
+        toast('Album created');
+        document.getElementById('albumTitle').value = '';
+        document.getElementById('albumDesc').value = '';
+        loadAdminAlbums();
+        fetchPhotos();
+      }
+    } catch (e) {}
+  }
+
+  async function saveAlbumPerm() {
+    const albumId = document.getElementById('permAlbumSelect').value;
+    const userId = document.getElementById('permUserSelect').value;
+    try {
+      const res = await fetch(`/api/admin/albums/${albumId}/permissions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, can_view: true, can_download: true })
+      });
+      if (res.ok) {
+        toast('Permission updated');
+        loadAlbumPerms();
+      }
+    } catch (e) {}
+  }
+
+  // Import Photos Engine
+  let availableImportFiles = [];
+  async function loadImportSources() {
+    try {
+      const res = await fetch('/api/admin/import/sources');
+      const data = await res.json();
+      const sel = document.getElementById('importSourceSelect');
+      const sources = data.sources || [];
+
+      sel.innerHTML = sources.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      // Populate albums select
+      const aSel = document.getElementById('importAlbumSelect');
+      aSel.innerHTML = '<option value="">None (General Library)</option>' + allAlbums.map(a => `<option value="${a.id}">${a.title}</option>`).join('');
+
+      if (sources.length > 0) browseImportFolder();
+      else document.getElementById('importFilesBox').innerHTML = '<em>No approved DCIM/Pictures storage folders found on device.</em>';
+    } catch (e) {}
+  }
+
+  async function browseImportFolder() {
+    const folder = document.getElementById('importSourceSelect').value;
+    if (!folder) return;
+    const box = document.getElementById('importFilesBox');
+    box.innerHTML = 'Scanning folder...';
+
+    try {
+      const res = await fetch(`/api/admin/import/browse?folder=${encodeURIComponent(folder)}`);
+      const data = await res.json();
+      availableImportFiles = data.items || [];
+
+      if (availableImportFiles.length === 0) {
+        box.innerHTML = '<em>No images found in this folder.</em>';
+        return;
+      }
+
+      box.innerHTML = availableImportFiles.map((f, i) => `
+        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer;">
+          <input type="checkbox" class="import-chk" value="${f.path}" onchange="updateImportSelectedCount()">
+          <span>${f.name} <small style="color:var(--text-muted);">(${f.size_mb} MB)</small></span>
+        </label>
+      `).join('');
+      updateImportSelectedCount();
+    } catch (e) {
+      box.innerHTML = '<em>Could not scan folder.</em>';
+    }
+  }
+
+  function updateImportSelectedCount() {
+    const count = document.querySelectorAll('.import-chk:checked').length;
+    document.getElementById('importCountSelected').textContent = `${count} selected`;
+  }
+
+  async function executePhotoImport() {
+    const chks = Array.from(document.querySelectorAll('.import-chk:checked')).map(c => c.value);
+    if (chks.length === 0) {
+      toast('Please select at least one photo to import');
+      return;
+    }
+    const albumId = document.getElementById('importAlbumSelect').value;
+    const btn = document.getElementById('importSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = `Importing ${chks.length} photo(s)...`;
+
+    try {
+      const res = await fetch('/api/admin/import/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: chks, album_id: albumId || null })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast(`Successfully imported ${data.imported_count} photo(s)!`);
+        closeModal('adminImportModal');
+        fetchPhotos();
+      } else {
+        toast(data.error || 'Import failed');
+      }
+    } catch (e) {
+      toast('Import error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Import Selected Photos';
+    }
+  }
 
   // Startup
-  renderQrCode(portalUrl);
-  fetchStatus().then(() => renderQrCode(portalUrl));
-  fetchFiles();
-  setInterval(fetchStatus, 4000);
+  checkAuth();
+  fetchStatus();
+  fetchPhotos();
+  setInterval(fetchStatus, 5000);
 </script>
 </body>
 </html>

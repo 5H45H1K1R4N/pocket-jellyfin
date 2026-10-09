@@ -5,3 +5,6 @@ Thumbs.db
 .jellyfin_api_key
 /minecraft/bot/.env
 /minecraft/bot/node_modules/
+__pycache__/
+*.pyc
+*.db

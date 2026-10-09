@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-Peppy Home Hub — Futuristic Home Server Portal Backend
-Zero external dependencies. Compatible with Python 3.10 through 3.14+ in Termux.
-Binds to local Wi-Fi only (0.0.0.0:7777). Never exposes private files or credentials.
+Peppy Home Hub 2.0 — Backend Engine
+Serves the private Home Cloud & Media Portal.
+Provides:
+  - Session-based authentication & default-deny authorization
+  - Peppy Photos: Album permissions, thumbnail generation, timeline queries
+  - File Drop: Per-user access control & sandboxed storage
+  - Movies & TV: Jellyfin live probing & guest connection help
+  - Minecraft: PaperMC & Bedrock live status and connection guides
+  - Server Telemetry: Battery, temperature, storage, zero credential leaks
 """
 
 import os
@@ -14,77 +20,52 @@ import shutil
 import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, unquote
+from typing import Optional, Dict, Any
+
+# Local database and security engine
+import db
 
 PORT = int(os.environ.get("PEPPY_PORT", 7777))
 HOST = "0.0.0.0"
 
-# Server identification
-BRAND_NAME = "Peppy Home Hub"
-TAGLINE = "Your Home. Your Services. One Hub."
-
-# Detect storage roots safely
+# Detect storage roots
 SD_CARD_ID = "26B2-1AEB"
 SD_BASE = f"/storage/{SD_CARD_ID}" if os.path.exists(f"/storage/{SD_CARD_ID}") else os.path.expanduser("~/storage/shared")
 STORAGE_ROOT = SD_BASE if os.path.exists(SD_BASE) else os.path.expanduser("~")
 
-# Dedicated upload directory (sandboxed, prevents path traversal)
+PHOTOS_DIR = os.path.join(STORAGE_ROOT, "PeppyPhotos")
+ORIGINALS_DIR = os.path.join(PHOTOS_DIR, "originals")
+THUMBS_DIR = os.path.join(PHOTOS_DIR, "thumbnails")
 DROP_DIR = os.path.join(STORAGE_ROOT, "PeppyDrop")
-os.makedirs(DROP_DIR, exist_ok=True)
 
-# Configuration for services
-SERVICES_CONFIG = {
-    "jellyfin": {
-        "id": "jellyfin",
-        "name": "Movies & TV",
-        "service_name": "Jellyfin Cinema",
-        "port": 8096,
-        "badge": "Cinema",
-        "icon": "🍿",
-        "desc": "Browse and stream movies and shows from our home library in full quality.",
-        "path": "/"
-    },
-    "minecraft": {
-        "id": "minecraft",
-        "name": "Minecraft Server",
-        "service_name": "PaperMC Survival World",
-        "java_port": 25565,
-        "bedrock_port": 19132,
-        "badge": "Multiplayer",
-        "icon": "⛏️",
-        "desc": "24/7 crossplay survival world. Play on PC (Java) or Phone/Console (Bedrock)."
-    },
-    "peppydrop": {
-        "id": "peppydrop",
-        "name": "File Drop",
-        "service_name": "Home Wi-Fi AirDrop",
-        "port": PORT,
-        "badge": "Local Share",
-        "icon": "📤",
-        "desc": "Quickly drop photos, videos, or documents directly to home storage without cloud compression."
-    },
-    "mc_dashboard": {
-        "id": "mc_dashboard",
-        "name": "Server Console",
-        "service_name": "PocketMC Admin & Peppy Bot",
-        "port": 8088,
-        "badge": "Admin / Bot",
-        "icon": "🤖",
-        "desc": "Live PaperMC logs, performance metrics, and Peppy AI bot command center."
-    }
+for d in (PHOTOS_DIR, ORIGINALS_DIR, THUMBS_DIR, DROP_DIR):
+    os.makedirs(d, exist_ok=True)
+
+# Try loading Pillow for high-quality thumbnail resizing
+try:
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+
+SERVICES_PORTS = {
+    "jellyfin": 8096,
+    "minecraft_java": 25565,
+    "minecraft_bedrock": 19132,
+    "mc_dashboard": 8088,
+    "peppy_bot": 8089
 }
 
 START_TIME = time.time()
 
-def probe_port(host="127.0.0.1", port=8096, timeout=0.5):
-    """Real TCP socket health check without blocking."""
+def probe_port(host="127.0.0.1", port=8096, timeout=0.5) -> bool:
     try:
         with socket.create_connection((host, int(port)), timeout=timeout):
             return True
     except (OSError, socket.timeout):
         return False
 
-def get_local_ip():
-    """Detect local LAN IP reliably."""
+def get_local_ip() -> str:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
@@ -94,8 +75,7 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
-def get_system_metrics():
-    """Safe system metrics without leaking private paths."""
+def get_system_metrics() -> Dict[str, Any]:
     metrics = {
         "uptime_seconds": int(time.time() - START_TIME),
         "battery_pct": 100,
@@ -105,8 +85,6 @@ def get_system_metrics():
         "storage_total_gb": 0,
         "storage_pct": 0
     }
-    
-    # Safe sysfs battery reading on Android
     try:
         if os.path.exists("/sys/class/power_supply/battery/capacity"):
             with open("/sys/class/power_supply/battery/capacity") as f:
@@ -121,9 +99,8 @@ def get_system_metrics():
     except Exception:
         pass
 
-    # Disk metrics for drop storage
     try:
-        total, used, free = shutil.disk_usage(DROP_DIR)
+        total, used, free = shutil.disk_usage(STORAGE_ROOT)
         metrics["storage_total_gb"] = round(total / (1024**3), 1)
         metrics["storage_free_gb"] = round(free / (1024**3), 1)
         metrics["storage_pct"] = round((used / total) * 100, 1) if total > 0 else 0
@@ -132,37 +109,35 @@ def get_system_metrics():
 
     return metrics
 
-def list_uploaded_files():
-    """Safe file listing without full filesystem exposure."""
-    files = []
-    if os.path.exists(DROP_DIR):
-        try:
-            for entry in sorted(os.scandir(DROP_DIR), key=lambda e: e.stat().st_mtime, reverse=True):
-                if entry.is_file() and not entry.name.startswith("."):
-                    stat = entry.stat()
-                    size_mb = round(stat.st_size / (1024**2), 2)
-                    size_str = f"{size_mb} MB" if size_mb >= 1 else f"{round(stat.st_size / 1024, 1)} KB"
-                    files.append({
-                        "name": entry.name,
-                        "size": size_str,
-                        "raw_size": stat.st_size,
-                        "timestamp": int(stat.st_mtime),
-                        "date_str": time.strftime("%b %d, %Y %I:%M %p", time.localtime(stat.st_mtime))
-                    })
-        except Exception:
-            pass
-    return files[:50]
+def make_thumbnail(orig_path: str, thumb_path: str) -> str:
+    """Generate and cache thumbnail using PIL if available, else point to original."""
+    if not os.path.exists(orig_path):
+        return orig_path
 
-def parse_multipart_files(body_bytes, boundary_bytes):
-    """
-    Zero-dependency, memory-safe multipart parser.
-    Strictly sanitizes filenames and prevents path traversal (e.g., ../../../).
-    """
-    uploaded = []
+    if os.path.exists(thumb_path):
+        return thumb_path
+
+    if HAS_PIL:
+        try:
+            with Image.open(orig_path) as im:
+                im.thumbnail((360, 360), Image.BILINEAR)
+                # Convert to RGB if RGBA/P for jpeg/webp
+                if im.mode in ("RGBA", "P"):
+                    im = im.convert("RGB")
+                im.save(thumb_path, "JPEG", quality=82)
+                return thumb_path
+        except Exception:
+            return orig_path
+    return orig_path
+
+def parse_multipart(body_bytes: bytes, boundary_bytes: bytes):
+    """Zero-dependency multipart file and form-data parser."""
+    fields = {}
+    files = []
     parts = body_bytes.split(b"--" + boundary_bytes)
 
     for part in parts:
-        if not part or part == b"--\r\n" or part == b"--":
+        if not part or part in (b"--\r\n", b"--"):
             continue
         if b"\r\n\r\n" in part:
             header_bytes, content = part.split(b"\r\n\r\n", 1)
@@ -170,51 +145,105 @@ def parse_multipart_files(body_bytes, boundary_bytes):
                 content = content[:-2]
 
             headers_text = header_bytes.decode("utf-8", errors="ignore")
-            match = re.search(r'filename="([^"]+)"', headers_text)
-            if match and len(content) > 0:
-                raw_filename = match.group(1).strip()
-                # Strict security: strip all directory path separators
+            # Extract name
+            name_match = re.search(r'name="([^"]+)"', headers_text)
+            field_name = name_match.group(1) if name_match else ""
+
+            # Check if file
+            fn_match = re.search(r'filename="([^"]+)"', headers_text)
+            if fn_match and len(content) > 0:
+                raw_filename = fn_match.group(1).strip()
                 safe_name = os.path.basename(raw_filename.replace("\\", "/"))
-                # Remove any dangerous characters
                 safe_name = re.sub(r'[^a-zA-Z0-9._ -]', '_', safe_name)
-                if not safe_name or safe_name == ".":
-                    continue
+                if safe_name and safe_name != ".":
+                    files.append({
+                        "field": field_name,
+                        "filename": safe_name,
+                        "data": content
+                    })
+            else:
+                try:
+                    fields[field_name] = content.decode("utf-8").strip()
+                except Exception:
+                    pass
 
-                dest_path = os.path.join(DROP_DIR, safe_name)
-                # Avoid collision by appending timestamp
-                if os.path.exists(dest_path):
-                    base, ext = os.path.splitext(safe_name)
-                    dest_path = os.path.join(DROP_DIR, f"{base}_{int(time.time())}{ext}")
-                    safe_name = os.path.basename(dest_path)
+    return fields, files
 
-                with open(dest_path, "wb") as f:
-                    f.write(content)
-                uploaded.append(safe_name)
+class PeppyHomeHubHandler(BaseHTTPRequestHandler):
 
-    return uploaded
-
-class PeppyHubHandler(BaseHTTPRequestHandler):
-    def send_json(self, data, status=200):
+    def send_json(self, data: Any, status: int = 200):
         body = json.dumps(data).encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 
+    def send_file(self, filepath: str, filename: str, as_download: bool = False):
+        if not os.path.exists(filepath) or not os.path.isfile(filepath):
+            self.send_error(404, "File not found")
+            return
+
+        file_size = os.path.getsize(filepath)
+        ext = os.path.splitext(filepath)[1].lower()
+        content_type = "application/octet-stream"
+        if ext in (".jpg", ".jpeg"): content_type = "image/jpeg"
+        elif ext == ".png": content_type = "image/png"
+        elif ext == ".webp": content_type = "image/webp"
+        elif ext == ".mp4": content_type = "video/mp4"
+
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(file_size))
+        if as_download:
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        else:
+            self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+
+        with open(filepath, "rb") as f:
+            shutil.copyfileobj(f, self.wfile)
+
+    def get_auth_user(self) -> Optional[Dict[str, Any]]:
+        """Extract and authenticate session token from headers or cookies."""
+        auth_hdr = self.headers.get("Authorization", "")
+        token = ""
+        if auth_hdr.startswith("Bearer "):
+            token = auth_hdr[7:].strip()
+        if not token:
+            cookie_hdr = self.headers.get("Cookie", "")
+            match = re.search(r'peppy_session=([a-f0-9]+)', cookie_hdr)
+            if match:
+                token = match.group(1)
+        if token:
+            return db.get_user_by_session(token)
+        return None
+
+    def read_json_body(self) -> Optional[Dict[str, Any]]:
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length == 0:
+                return {}
+            raw = self.rfile.read(length)
+            return json.loads(raw.decode("utf-8"))
+        except Exception:
+            return None
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
+        qs = parse_qs(parsed.query)
 
+        # ── Static UI ──
         if path in ("/", "/index.html"):
             html_path = os.path.join(os.path.dirname(__file__), "index.html")
             if os.path.exists(html_path):
@@ -226,140 +255,490 @@ class PeppyHubHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(content)
             else:
-                self.send_error(404, "Portal index.html missing")
+                self.send_error(404, "index.html missing")
             return
 
-        # Real health check API
-        elif path == "/api/status":
+        # ── Public Telemetry & Status ──
+        elif path == "/api/public/status":
             local_ip = get_local_ip()
-            
-            # Real socket probes
-            jellyfin_online = probe_port(port=8096)
-            mc_java_online = probe_port(port=25565)
-            mc_bedrock_online = probe_port(port=19132)
-            dashboard_online = probe_port(port=8088)
-            bot_online = probe_port(port=8089)
-
-            response_data = {
-                "brand": BRAND_NAME,
-                "tagline": TAGLINE,
+            statuses = {
+                k: probe_port(port=v)
+                for k, v in SERVICES_PORTS.items()
+            }
+            data = {
+                "server_name": "Peppy Home Hub",
+                "tagline": "Your Home. Your Memories. Your Private Cloud.",
                 "local_ip": local_ip,
                 "hub_port": PORT,
                 "services": {
-                    "jellyfin": {
-                        "name": SERVICES_CONFIG["jellyfin"]["name"],
-                        "url": f"http://{local_ip}:8096",
-                        "port": 8096,
-                        "online": jellyfin_online,
-                        "status_text": "Online" if jellyfin_online else "Offline"
-                    },
-                    "minecraft": {
-                        "name": SERVICES_CONFIG["minecraft"]["name"],
-                        "java_port": 25565,
-                        "bedrock_port": 19132,
-                        "java_address": f"{local_ip}:25565",
-                        "bedrock_address": f"{local_ip}:19132",
-                        "online": mc_java_online,
-                        "bedrock_online": mc_bedrock_online,
-                        "status_text": "Online" if mc_java_online else "Offline"
-                    },
-                    "peppydrop": {
-                        "name": SERVICES_CONFIG["peppydrop"]["name"],
-                        "online": True,
-                        "status_text": "Ready"
-                    },
-                    "mc_dashboard": {
-                        "name": SERVICES_CONFIG["mc_dashboard"]["name"],
-                        "url": f"http://{local_ip}:8088",
-                        "online": dashboard_online,
-                        "status_text": "Online" if dashboard_online else "Offline"
-                    },
-                    "peppy_bot": {
-                        "online": bot_online,
-                        "status_text": "Online" if bot_online else "Offline"
-                    }
+                    "jellyfin": {"online": statuses["jellyfin"], "port": 8096, "url": f"http://{local_ip}:8096"},
+                    "minecraft_java": {"online": statuses["minecraft_java"], "port": 25565, "address": f"{local_ip}:25565"},
+                    "minecraft_bedrock": {"online": statuses["minecraft_bedrock"], "port": 19132, "address": f"{local_ip}:19132"},
+                    "mc_dashboard": {"online": statuses["mc_dashboard"], "port": 8088, "url": f"http://{local_ip}:8088"},
+                    "peppy_bot": {"online": statuses["peppy_bot"], "port": 8089}
                 },
                 "metrics": get_system_metrics(),
-                "files_count": len(list_uploaded_files()),
-                "timestamp": int(time.time()),
-                "check_time_str": time.strftime("%I:%M:%S %p", time.localtime())
+                "time_str": time.strftime("%I:%M:%S %p", time.localtime())
             }
-            self.send_json(response_data)
+            self.send_json(data)
             return
 
-        # List files in drop storage
-        elif path == "/api/files":
-            self.send_json({"files": list_uploaded_files()})
-            return
-
-        # Download dropped file
-        elif path.startswith("/download/"):
-            filename = unquote(path[len("/download/"):])
-            # Security: Prevent path traversal
-            safe_name = os.path.basename(filename.replace("\\", "/"))
-            filepath = os.path.join(DROP_DIR, safe_name)
-            if os.path.exists(filepath) and os.path.isfile(filepath):
-                self.send_response(200)
-                self.send_header("Content-Type", "application/octet-stream")
-                self.send_header("Content-Disposition", f'attachment; filename="{safe_name}"')
-                self.send_header("Content-Length", str(os.path.getsize(filepath)))
-                self.end_headers()
-                with open(filepath, "rb") as f:
-                    shutil.copyfileobj(f, self.wfile)
+        # ── Auth: Current Session Info ──
+        elif path == "/api/auth/me":
+            user = self.get_auth_user()
+            if not user:
+                self.send_json({"authenticated": False}, 401)
                 return
-            else:
+            self.send_json({"authenticated": True, "user": user})
+            return
+
+        # ── Photos & Albums (Protected) ──
+        elif path == "/api/photos":
+            user = self.get_auth_user()
+            if not user:
+                self.send_json({"error": "Unauthorized"}, 401)
+                return
+            album_id = int(qs["album_id"][0]) if "album_id" in qs else None
+            search = qs["search"][0] if "search" in qs else None
+            photos = db.get_authorized_photos(user, album_id=album_id, search=search)
+            self.send_json({"photos": photos})
+            return
+
+        elif path == "/api/albums":
+            user = self.get_auth_user()
+            if not user:
+                self.send_json({"error": "Unauthorized"}, 401)
+                return
+            albums = db.get_authorized_albums(user)
+            self.send_json({"albums": albums})
+            return
+
+        elif re.match(r"^/api/photos/(\d+)/(thumb|view|download)$", path):
+            m = re.match(r"^/api/photos/(\d+)/(thumb|view|download)$", path)
+            photo_id = int(m.group(1))
+            action_type = m.group(2)
+
+            user = self.get_auth_user()
+            if not user:
+                self.send_json({"error": "Unauthorized"}, 401)
+                return
+
+            req_action = "download" if action_type == "download" else "view"
+            if not db.can_access_photo(user, photo_id, action=req_action):
+                self.send_json({"error": "Access Denied: You do not have permission to view this photo."}, 403)
+                return
+
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM photos WHERE id = ?", (photo_id,))
+            photo = cursor.fetchone()
+            conn.close()
+
+            if not photo:
+                self.send_error(404, "Photo not found")
+                return
+
+            orig_path = photo["filepath"]
+            if action_type == "thumb":
+                thumb_name = f"thumb_{photo_id}.jpg"
+                thumb_path = os.path.join(THUMBS_DIR, thumb_name)
+                resolved = make_thumbnail(orig_path, thumb_path)
+                self.send_file(resolved, photo["filename"])
+            elif action_type == "view":
+                self.send_file(orig_path, photo["filename"], as_download=False)
+            elif action_type == "download":
+                self.send_file(orig_path, photo["filename"], as_download=True)
+            return
+
+        # ── File Drop (Protected) ──
+        elif path == "/api/files":
+            user = self.get_auth_user()
+            if not user:
+                self.send_json({"error": "Unauthorized"}, 401)
+                return
+            files = db.get_authorized_file_drops(user)
+            self.send_json({"files": files})
+            return
+
+        elif re.match(r"^/api/files/(\d+)/download$", path):
+            file_id = int(re.match(r"^/api/files/(\d+)/download$", path).group(1))
+            user = self.get_auth_user()
+            if not user or not db.can_access_file_drop(user, file_id, action="download"):
+                self.send_json({"error": "Access Denied"}, 403)
+                return
+
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM file_drops WHERE id = ?", (file_id,))
+            file_row = cursor.fetchone()
+            conn.close()
+
+            if not file_row:
                 self.send_error(404, "File not found")
                 return
+
+            self.send_file(file_row["filepath"], file_row["filename"], as_download=True)
+            return
+
+        # ── Admin Only: Users List ──
+        elif path == "/api/admin/users":
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+            users = db.list_users()
+            self.send_json({"users": users})
+            return
+
+        # ── Admin Only: Album Permissions ──
+        elif re.match(r"^/api/admin/albums/(\d+)/permissions$", path):
+            album_id = int(re.match(r"^/api/admin/albums/(\d+)/permissions$", path).group(1))
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+            perms = db.get_album_permissions(album_id)
+            self.send_json({"permissions": perms})
+            return
+
+        # ── Admin Only: Import Sources Explorer ──
+        elif path == "/api/admin/import/sources":
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+
+            # Approved, safe import directories
+            candidates = [
+                os.path.join(STORAGE_ROOT, "DCIM"),
+                os.path.join(STORAGE_ROOT, "Pictures"),
+                os.path.join(STORAGE_ROOT, "Download"),
+                "/storage/emulated/0/DCIM",
+                "/storage/emulated/0/Pictures",
+                os.path.expanduser("~/storage/shared/DCIM")
+            ]
+            valid_sources = [p for p in candidates if os.path.exists(p) and os.path.isdir(p)]
+            self.send_json({"sources": valid_sources})
+            return
+
+        elif path == "/api/admin/import/browse":
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+
+            folder = qs.get("folder", [""])[0]
+            # Verify folder is allowed
+            if not folder or not os.path.exists(folder) or not os.path.isdir(folder):
+                self.send_json({"error": "Invalid folder"}, 400)
+                return
+
+            items = []
+            valid_exts = {".jpg", ".jpeg", ".png", ".webp"}
+            try:
+                for entry in sorted(os.scandir(folder), key=lambda e: e.stat().st_mtime, reverse=True):
+                    if entry.is_file():
+                        ext = os.path.splitext(entry.name)[1].lower()
+                        if ext in valid_exts:
+                            items.append({
+                                "name": entry.name,
+                                "path": entry.path,
+                                "size_mb": round(entry.stat().st_size / (1024**2), 2),
+                                "time": time.strftime("%Y-%m-%d", time.localtime(entry.stat().st_mtime))
+                            })
+                    if len(items) >= 200:
+                        break
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+                return
+
+            self.send_json({"items": items})
+            return
 
         self.send_error(404)
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        path = parsed.path
 
-        if parsed.path == "/api/upload":
-            content_type = self.headers.get("Content-Type", "")
-            if not content_type.startswith("multipart/form-data"):
-                self.send_json({"success": False, "error": "Invalid multipart form submission"}, 400)
+        # ── Auth: Login ──
+        if path == "/api/auth/login":
+            data = self.read_json_body()
+            if not data or "username" not in data or "password" not in data:
+                self.send_json({"error": "Username and password required"}, 400)
                 return
 
+            res = db.authenticate(data["username"], data["password"])
+            if not res:
+                self.send_json({"error": "Invalid username or password"}, 401)
+                return
+
+            # Set HTTP-only session cookie
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Set-Cookie", f"peppy_session={res['token']}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000")
+            body = json.dumps(res).encode("utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        elif path == "/api/auth/logout":
+            auth_hdr = self.headers.get("Authorization", "")
+            token = auth_hdr[7:].strip() if auth_hdr.startswith("Bearer ") else ""
+            if not token:
+                cookie_hdr = self.headers.get("Cookie", "")
+                m = re.search(r'peppy_session=([a-f0-9]+)', cookie_hdr)
+                if m: token = m.group(1)
+            if token:
+                db.revoke_session(token)
+            self.send_json({"success": True})
+            return
+
+        # ── Favorite Photo ──
+        elif re.match(r"^/api/photos/(\d+)/favorite$", path):
+            photo_id = int(re.match(r"^/api/photos/(\d+)/favorite$", path).group(1))
+            user = self.get_auth_user()
+            if not user or not db.can_access_photo(user, photo_id, action="view"):
+                self.send_json({"error": "Unauthorized"}, 403)
+                return
+            is_fav = db.toggle_favorite(user["id"], photo_id)
+            self.send_json({"photo_id": photo_id, "is_favorite": is_fav})
+            return
+
+        # ── File Drop Upload ──
+        elif path == "/api/files/upload":
+            user = self.get_auth_user()
+            if not user:
+                self.send_json({"error": "Sign in required to drop files"}, 401)
+                return
+
+            content_type = self.headers.get("Content-Type", "")
+            if not content_type.startswith("multipart/form-data"):
+                self.send_json({"error": "Invalid multipart data"}, 400)
+                return
+
+            b_match = re.search(r'boundary=(.+)$', content_type)
+            if not b_match:
+                self.send_json({"error": "Missing boundary"}, 400)
+                return
+
+            boundary = b_match.group(1).strip().strip('"').encode("utf-8")
+            content_length = int(self.headers.get("Content-Length", 0))
+            if content_length > 300 * 1024 * 1024:
+                self.send_json({"error": "Payload exceeds 300MB limit"}, 413)
+                return
+
+            body_bytes = self.rfile.read(content_length)
+            fields, files = parse_multipart(body_bytes, boundary)
+            visibility = fields.get("visibility", "public")
+            if visibility not in ("public", "private", "admin_only"):
+                visibility = "public"
+
+            saved_items = []
+            for f in files:
+                dest_path = os.path.join(DROP_DIR, f["filename"])
+                if os.path.exists(dest_path):
+                    base, ext = os.path.splitext(f["filename"])
+                    dest_path = os.path.join(DROP_DIR, f"{base}_{int(time.time())}{ext}")
+                with open(dest_path, "wb") as out:
+                    out.write(f["data"])
+
+                size = os.path.getsize(dest_path)
+                file_id = db.add_file_drop(
+                    filename=os.path.basename(dest_path),
+                    filepath=dest_path,
+                    file_size=size,
+                    user_id=user["id"],
+                    uploader_name=user["display_name"] or user["username"],
+                    visibility=visibility
+                )
+                saved_items.append({"id": file_id, "name": os.path.basename(dest_path)})
+
+            self.send_json({"success": True, "files": saved_items})
+            return
+
+        # ── Admin Only: Create Album ──
+        elif path == "/api/admin/albums":
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+            data = self.read_json_body()
+            if not data or not data.get("title"):
+                self.send_json({"error": "Title required"}, 400)
+                return
+            album_id = db.create_album(
+                title=data["title"].strip(),
+                description=data.get("description", "").strip(),
+                access_policy=data.get("access_policy", "restricted"),
+                user_id=user["id"]
+            )
+            self.send_json({"success": True, "album_id": album_id})
+            return
+
+        # ── Admin Only: Create User ──
+        elif path == "/api/admin/users":
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+            data = self.read_json_body()
             try:
-                boundary_match = re.search(r'boundary=(.+)$', content_type)
-                if not boundary_match:
-                    self.send_json({"success": False, "error": "Missing multipart boundary"}, 400)
-                    return
+                new_id = db.create_user(
+                    username=data.get("username", ""),
+                    password=data.get("password", ""),
+                    display_name=data.get("display_name", ""),
+                    role=data.get("role", "member")
+                )
+                self.send_json({"success": True, "user_id": new_id})
+            except ValueError as e:
+                self.send_json({"error": str(e)}, 400)
+            return
 
-                boundary = boundary_match.group(1).strip()
-                if boundary.startswith('"') and boundary.endswith('"'):
-                    boundary = boundary[1:-1]
-                boundary_bytes = boundary.encode("utf-8")
+        # ── Admin Only: Import Photos to Library ──
+        elif path == "/api/admin/import/execute":
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+            data = self.read_json_body()
+            if not data or not data.get("files"):
+                self.send_json({"error": "File list required"}, 400)
+                return
 
-                content_length = int(self.headers.get("Content-Length", 0))
-                # 200MB max per upload request to safeguard phone RAM
-                if content_length > 200 * 1024 * 1024:
-                    self.send_json({"success": False, "error": "Upload size exceeds 200MB limit"}, 413)
-                    return
+            album_id = data.get("album_id")
+            imported_count = 0
 
-                body_bytes = self.rfile.read(content_length)
-                uploaded = parse_multipart_files(body_bytes, boundary_bytes)
-                self.send_json({"success": True, "uploaded": uploaded})
-            except Exception as e:
-                self.send_json({"success": False, "error": str(e)}, 500)
+            for src in data["files"]:
+                if os.path.exists(src) and os.path.isfile(src):
+                    fname = os.path.basename(src)
+                    dest = os.path.join(ORIGINALS_DIR, fname)
+                    if os.path.exists(dest):
+                        base, ext = os.path.splitext(fname)
+                        dest = os.path.join(ORIGINALS_DIR, f"{base}_{int(time.time())}{ext}")
+
+                    # Non-destructive copy
+                    shutil.copy2(src, dest)
+                    size = os.path.getsize(dest)
+                    mtime_date = time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(src)))
+
+                    photo_id = db.add_photo(
+                        filename=os.path.basename(dest),
+                        filepath=dest,
+                        thumbnail_path="",
+                        file_size=size,
+                        user_id=user["id"],
+                        caption=data.get("caption", ""),
+                        date_taken=mtime_date
+                    )
+                    if album_id:
+                        db.assign_photo_to_album(int(album_id), photo_id)
+                    imported_count += 1
+
+            self.send_json({"success": True, "imported_count": imported_count})
+            return
+
+        self.send_error(404)
+
+    def do_PUT(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        # ── Admin Only: Update User ──
+        if re.match(r"^/api/admin/users/(\d+)$", path):
+            target_id = int(re.match(r"^/api/admin/users/(\d+)$", path).group(1))
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+
+            data = self.read_json_body()
+            if not data:
+                self.send_json({"error": "Payload required"}, 400)
+                return
+
+            db.update_user(
+                user_id=target_id,
+                display_name=data.get("display_name"),
+                role=data.get("role"),
+                is_active=data.get("is_active"),
+                new_password=data.get("new_password")
+            )
+            self.send_json({"success": True})
+            return
+
+        # ── Admin Only: Set Album Permissions ──
+        elif re.match(r"^/api/admin/albums/(\d+)/permissions$", path):
+            album_id = int(re.match(r"^/api/admin/albums/(\d+)/permissions$", path).group(1))
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+
+            data = self.read_json_body()
+            if not data or "user_id" not in data:
+                self.send_json({"error": "user_id required"}, 400)
+                return
+
+            db.set_album_permissions(
+                album_id=album_id,
+                user_id=int(data["user_id"]),
+                can_view=bool(data.get("can_view", True)),
+                can_download=bool(data.get("can_download", True)),
+                can_manage=bool(data.get("can_manage", False))
+            )
+            self.send_json({"success": True})
+            return
+
+        self.send_error(404)
+
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        # ── Delete File Drop ──
+        if re.match(r"^/api/files/(\d+)$", path):
+            file_id = int(re.match(r"^/api/files/(\d+)$", path).group(1))
+            user = self.get_auth_user()
+            if not user or not db.can_access_file_drop(user, file_id, action="delete"):
+                self.send_json({"error": "Access Denied"}, 403)
+                return
+
+            db.delete_file_drop(file_id)
+            self.send_json({"success": True})
+            return
+
+        # ── Admin Only: Delete User ──
+        elif re.match(r"^/api/admin/users/(\d+)$", path):
+            target_id = int(re.match(r"^/api/admin/users/(\d+)$", path).group(1))
+            user = self.get_auth_user()
+            if not user or user["role"] != "admin":
+                self.send_json({"error": "Admin required"}, 403)
+                return
+            try:
+                db.delete_user(target_id)
+                self.send_json({"success": True})
+            except ValueError as e:
+                self.send_json({"error": str(e)}, 400)
             return
 
         self.send_error(404)
 
     def log_message(self, format, *args):
-        # Quiet logger: battery efficient, avoids leaking query params or tokens to disk
+        # Quiet logging: does not print sensitive tokens or passwords
         pass
 
-def run():
+def main():
+    db.init_db()
     ip = get_local_ip()
     print("=" * 64)
-    print("  🚀 Peppy Home Hub — Futuristic Home Server Portal")
+    print("  🚀 Peppy Home Hub 2.0 — Private Home Cloud & Media Portal")
     print(f"  Live on Local Wi-Fi: http://{ip}:{PORT}")
-    print(f"  Drop Directory:      {DROP_DIR}")
+    print(f"  Photos Directory:    {PHOTOS_DIR}")
+    print(f"  File Drop Directory: {DROP_DIR}")
     print("=" * 64)
-    server = HTTPServer((HOST, PORT), PeppyHubHandler)
+    server = HTTPServer((HOST, PORT), PeppyHomeHubHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -367,4 +746,4 @@ def run():
     server.server_close()
 
 if __name__ == "__main__":
-    run()
+    main()

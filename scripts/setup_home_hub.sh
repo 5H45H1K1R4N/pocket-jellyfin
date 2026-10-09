@@ -11,6 +11,7 @@ mkdir -p "$PORTAL_DIR"
 BASE_URL="https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/portal"
 
 echo "[1/3] Downloading Peppy Home Hub portal engine..."
+curl -fsSL "$BASE_URL/db.py?t=$(date +%s)" -o "$PORTAL_DIR/db.py"
 curl -fsSL "$BASE_URL/app.py?t=$(date +%s)" -o "$PORTAL_DIR/app.py"
 curl -fsSL "$BASE_URL/index.html?t=$(date +%s)" -o "$PORTAL_DIR/index.html"
 
