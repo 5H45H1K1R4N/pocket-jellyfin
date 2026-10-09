@@ -3,336 +3,439 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>KHURE-SERVER | Home Cloud & Gaming Hub</title>
-<meta name="theme-color" content="#090a0f">
-<!-- Built-in QR Code Generation library via unpkg/cdn -->
+<title>Peppy Home Hub | Your Home. Your Services. One Hub.</title>
+<meta name="theme-color" content="#060810">
+<!-- Built-in QR Code Generator -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --bg: #090a10;
-    --card: #12141f;
-    --card-hover: #191c2b;
-    --border: #232738;
-    --text: #f0f2f8;
-    --muted: #79829c;
-    --accent: #6366f1;
-    --accent-glow: rgba(99, 102, 241, 0.25);
+    --bg: #060810;
+    --surface: #0c0f1d;
+    --card: #121629;
+    --card-hover: #191f38;
+    --card-inner: #0a0d18;
+    --border: #1c223c;
+    --border-bright: #2d3862;
+    --text: #f1f5f9;
+    --text-muted: #828ea8;
+    --cyan: #00e5ff;
+    --cyan-glow: rgba(0, 229, 255, 0.22);
+    --cyan-subtle: rgba(0, 229, 255, 0.08);
+    --blue: #3b82f6;
     --green: #10b981;
-    --green-glow: rgba(16, 185, 129, 0.2);
+    --green-glow: rgba(16, 185, 129, 0.25);
     --red: #ef4444;
     --yellow: #f59e0b;
-    --cyan: #06b6d4;
-    --pink: #ec4899;
+    --purple: #8b5cf6;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     min-height: 100vh;
-    padding-bottom: 60px;
+    padding-bottom: 70px;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Subtle background radial glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 1000px; height: 500px;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.05) 0%, rgba(59, 130, 246, 0.02) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
   }
 
   .container {
-    max-width: 640px;
+    max-width: 760px;
     margin: 0 auto;
     padding: 16px;
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Header ── */
   .header {
     text-align: center;
-    padding: 24px 12px 18px;
-    position: relative;
+    padding: 28px 12px 20px;
   }
-  .brand-badge {
+  .brand-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #a5b4fc;
+    gap: 8px;
+    background: var(--cyan-subtle);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    color: var(--cyan);
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 12px;
+    padding: 5px 14px;
+    border-radius: 30px;
+    margin-bottom: 14px;
+    box-shadow: 0 0 16px var(--cyan-glow);
   }
-  .title {
-    font-size: 28px;
+  .brand-logo-icon {
+    font-size: 14px;
+    display: inline-block;
+  }
+
+  .hero-title {
+    font-size: 34px;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+    letter-spacing: -0.8px;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #ffffff 40%, #7dd3fc 80%, #00e5ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .subtitle {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 6px;
+  .hero-tagline {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-weight: 500;
   }
 
-  /* ── Live Stats Pill Strip ── */
-  .pills-strip {
+  /* ── Network & Time Ribbon ── */
+  .ribbon {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 10px;
-    margin-top: 16px;
+    margin-top: 18px;
     flex-wrap: wrap;
   }
-  .pill {
+  .ribbon-pill {
     background: var(--card);
     border: 1px solid var(--border);
     padding: 6px 14px;
     border-radius: 30px;
     font-size: 11px;
     font-weight: 600;
-    display: flex;
+    color: var(--text);
+    display: inline-flex;
     align-items: center;
     gap: 6px;
   }
-  .dot {
+  .status-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: var(--green);
     box-shadow: 0 0 8px var(--green);
   }
-  .dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
-  .dot.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .status-dot.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .status-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
 
-  /* ── Section Titles ── */
-  .section-label {
+  /* ── Navigation Tabs ── */
+  .nav-tabs {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px;
+    margin: 24px 0 20px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 90px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    background: var(--card);
+    color: var(--cyan);
+    border: 1px solid var(--border-bright);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  /* ── Tab Views ── */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.25s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Section Title ── */
+  .section-heading {
     font-size: 12px;
     font-weight: 700;
-    color: var(--muted);
     letter-spacing: 0.8px;
     text-transform: uppercase;
-    margin: 24px 4px 10px;
+    color: var(--text-muted);
+    margin: 20px 4px 10px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
   /* ── Service Cards ── */
-  .cards-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .card {
+  .service-card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    margin-bottom: 16px;
     position: relative;
     overflow: hidden;
-    display: block;
+    transition: border-color 0.2s, background 0.2s;
   }
-  .card:active {
-    transform: scale(0.98);
+  .service-card:hover {
+    border-color: var(--border-bright);
   }
-  .card::before {
+  .service-card::after {
     content: '';
     position: absolute;
-    inset: 0;
-    border-radius: 16px;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    top: 0; right: 0;
+    width: 140px; height: 140px;
+    border-radius: 50%;
     pointer-events: none;
   }
+  .card-jellyfin::after {
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
+  }
+  .card-minecraft::after {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+  }
 
-  .card-top {
+  .card-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
   }
-  .card-brand {
+  .card-title-group {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
   }
-  .card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+  .service-icon {
+    width: 48px; height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--card-inner);
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 24px;
   }
-  .card-title {
-    font-size: 17px;
+  .service-title {
+    font-size: 19px;
     font-weight: 700;
     letter-spacing: -0.3px;
   }
-  .card-tag {
-    font-size: 11px;
-    color: var(--muted);
+  .service-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
   }
-  .status-tag {
+
+  .badge-status {
     font-size: 11px;
     font-weight: 700;
-    padding: 3px 10px;
+    padding: 4px 10px;
     border-radius: 20px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: rgba(16, 185, 129, 0.12);
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.1);
     color: var(--green);
     border: 1px solid rgba(16, 185, 129, 0.25);
   }
-  .status-tag.offline {
-    background: rgba(239, 68, 68, 0.12);
+  .badge-status.offline {
+    background: rgba(239, 68, 68, 0.1);
     color: var(--red);
     border-color: rgba(239, 68, 68, 0.25);
   }
 
-  .card-desc {
-    font-size: 13px;
-    color: #a0a6b9;
-    line-height: 1.45;
-    margin-bottom: 14px;
-  }
-  .card-action {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(255,255,255,0.03);
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #c7d2fe;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .action-arrow {
-    font-size: 14px;
-    transition: transform 0.2s;
-  }
-  .card:hover .action-arrow {
-    transform: translateX(3px);
+  .service-desc {
+    font-size: 13.5px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-bottom: 18px;
   }
 
-  /* ── Minecraft Spec Box ── */
-  .mc-specs {
+  /* Action Buttons */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: linear-gradient(135deg, #00c4de 0%, #0088cc 100%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 13px 20px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 196, 222, 0.25);
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--card-inner);
+    border: 1px solid var(--border);
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--cyan); color: #ffffff; }
+
+  /* Help Accordion */
+  .accordion-box {
+    background: var(--card-inner);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-top: 14px;
+    overflow: hidden;
+  }
+  .accordion-header {
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cyan);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .accordion-body {
+    padding: 0 14px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    display: none;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding-top: 10px;
+  }
+  .accordion-box.open .accordion-body { display: block; }
+  .accordion-box.open .acc-arrow { transform: rotate(180deg); }
+  .acc-arrow { transition: transform 0.2s; font-size: 10px; }
+
+  /* Spec Grid for Minecraft */
+  .spec-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    margin-bottom: 14px;
   }
-  .mc-spec-btn {
-    background: #181b28;
+  .spec-card {
+    background: var(--card-inner);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px;
-    text-align: left;
+    border-radius: 12px;
+    padding: 12px;
     cursor: pointer;
     transition: all 0.15s;
   }
-  .mc-spec-btn:active {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: var(--accent);
-  }
-  .mc-spec-label {
+  .spec-card:active { border-color: var(--cyan); background: var(--cyan-subtle); }
+  .spec-label {
     font-size: 10px;
-    color: var(--muted);
+    font-weight: 700;
+    color: var(--text-muted);
     text-transform: uppercase;
-    font-weight: 700;
   }
-  .mc-spec-val {
-    font-size: 12px;
+  .spec-val {
+    font-size: 13px;
     font-weight: 700;
-    color: #e0e7ff;
+    color: var(--text);
     font-family: monospace;
-    margin-top: 2px;
+    margin-top: 4px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
   }
 
-  /* ── Drop Zone ── */
-  .drop-box {
-    background: var(--card);
-    border: 2px dashed rgba(99, 102, 241, 0.4);
-    border-radius: 16px;
-    padding: 24px 16px;
+  /* ── File Drop Box ── */
+  .dropzone {
+    background: var(--card-inner);
+    border: 2px dashed rgba(0, 229, 255, 0.35);
+    border-radius: var(--radius-lg);
+    padding: 30px 16px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    position: relative;
   }
-  .drop-box.dragover {
-    border-color: var(--green);
-    background: rgba(16, 185, 129, 0.05);
+  .dropzone.dragover {
+    border-color: var(--cyan);
+    background: var(--cyan-subtle);
   }
-  .drop-icon {
-    font-size: 36px;
-    margin-bottom: 8px;
-  }
-  .drop-title {
-    font-size: 15px;
-    font-weight: 700;
-  }
-  .drop-hint {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-  .file-input {
-    display: none;
-  }
+  .drop-icon { font-size: 40px; margin-bottom: 8px; }
+  .drop-main { font-size: 15px; font-weight: 700; }
+  .drop-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .file-input { display: none; }
 
-  /* Upload Progress */
-  .upload-status {
+  .upload-progress-box {
     margin-top: 14px;
     display: none;
   }
-  .progress-bar-wrap {
+  .progress-track {
     height: 6px;
     background: rgba(255,255,255,0.06);
     border-radius: 6px;
     overflow: hidden;
     margin-top: 6px;
   }
-  .progress-fill {
+  .progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--accent), var(--cyan));
-    transition: width 0.3s;
+    background: linear-gradient(90deg, #00c4de, #3b82f6);
+    transition: width 0.25s;
   }
 
-  /* ── File List ── */
+  /* File items */
   .file-list {
     margin-top: 14px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
-  .file-item {
-    background: #151824;
+  .file-row {
+    background: var(--card-inner);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
+    border-radius: 12px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 13px;
   }
-  .file-info {
+  .file-meta {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -343,62 +446,92 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 220px;
+    max-width: 200px;
   }
-  .file-size {
-    font-size: 11px;
-    color: var(--muted);
-  }
-  .dl-btn {
-    background: rgba(99, 102, 241, 0.15);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #a5b4fc;
-    padding: 4px 10px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 11px;
-  }
+  .file-sub { font-size: 11px; color: var(--text-muted); }
 
-  /* ── QR Code Card ── */
-  .qr-card {
+  /* ── Status Grid ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .metric-box {
+    background: var(--card-inner);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+  }
+  .metric-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+  .metric-value { font-size: 19px; font-weight: 800; color: #fff; margin-top: 4px; }
+
+  /* ── QR Card ── */
+  .qr-box {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: var(--radius-lg);
+    padding: 24px;
     text-align: center;
-    margin-top: 16px;
   }
   .qr-frame {
     display: inline-block;
     background: #ffffff;
     padding: 14px;
     border-radius: 14px;
-    margin: 12px 0;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    margin: 14px 0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
   }
 
-  /* ── Toast ── */
+  /* ── FAQ items ── */
+  .faq-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .faq-q {
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .faq-a {
+    padding: 0 16px 14px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    display: none;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding-top: 10px;
+  }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); }
+  .faq-arrow { font-size: 10px; color: var(--cyan); transition: transform 0.2s; }
+
+  /* ── Toast Alert ── */
   .toast {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
+    bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: #1e2235;
-    border: 1px solid var(--accent);
+    background: #1e2540;
+    border: 1px solid var(--cyan);
     color: #fff;
-    padding: 10px 20px;
-    border-radius: 25px;
+    padding: 11px 22px;
+    border-radius: 30px;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 1000;
     white-space: nowrap;
   }
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -407,134 +540,421 @@
 
   <!-- Header -->
   <header class="header">
-    <div class="brand-badge">🏰 KHURE FAMILY LOCAL CLOUD</div>
-    <h1 class="title">KHURE-SERVER</h1>
-    <p class="subtitle">Scan once, enjoy everywhere on our home Wi-Fi</p>
+    <div class="brand-chip">
+      <span class="brand-logo-icon">🚀</span>
+      <span>PEPPY HOME HUB</span>
+    </div>
+    <h1 class="hero-title">Welcome Home</h1>
+    <p class="hero-tagline">Your Home. Your Services. One Hub.</p>
 
-    <!-- Telemetry Strip -->
-    <div class="pills-strip">
-      <div class="pill">
-        <span class="dot" id="serverStateDot"></span>
-        <span id="serverStateText">Server Online</span>
+    <!-- Network & Live Time Ribbon -->
+    <div class="ribbon">
+      <div class="ribbon-pill">
+        <span class="status-dot" id="globalStateDot"></span>
+        <span id="globalStateText">Local Wi-Fi Hub Online</span>
       </div>
-      <div class="pill">
-        <span>🔋</span>
-        <span id="battText">--%</span>
+      <div class="ribbon-pill">
+        <span>🕒</span>
+        <span id="liveClock">--:--:--</span>
       </div>
-      <div class="pill">
-        <span>💾</span>
-        <span id="storageText">-- GB Free</span>
+      <div class="ribbon-pill">
+        <span>📶</span>
+        <span id="networkIpPill">Checking IP...</span>
       </div>
     </div>
   </header>
 
-  <!-- Section: Entertainment -->
-  <div class="section-label">🎬 Entertainment & Gaming</div>
-  <div class="cards-grid">
+  <!-- Navigation Bar -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('home', this)">
+      <span>🏠</span> Home
+    </button>
+    <button class="tab-btn" onclick="switchTab('movies', this)">
+      <span>🍿</span> Movies & TV
+    </button>
+    <button class="tab-btn" onclick="switchTab('minecraft', this)">
+      <span>⛏️</span> Minecraft
+    </button>
+    <button class="tab-btn" onclick="switchTab('files', this)">
+      <span>📤</span> File Drop
+    </button>
+    <button class="tab-btn" onclick="switchTab('status', this)">
+      <span>📊</span> Status
+    </button>
+    <button class="tab-btn" onclick="switchTab('help', this)">
+      <span>❓</span> Help
+    </button>
+  </nav>
 
-    <!-- Card 1: Jellyfin Cinema -->
-    <a href="#" id="jellyfinLink" class="card" target="_blank">
-      <div class="card-top">
-        <div class="card-brand">
-          <div class="card-icon">🍿</div>
+  <!-- ══════════════ TAB 1: HOME (OVERVIEW) ══════════════ -->
+  <section class="tab-content active" id="tab-home">
+    <div class="section-heading">Featured Home Services</div>
+
+    <!-- Movies Overview Card -->
+    <div class="service-card card-jellyfin">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">🍿</div>
           <div>
-            <div class="card-title">Jellyfin Home Cinema</div>
-            <div class="card-tag">Family Movies & TV Shows</div>
+            <div class="service-title">Movies & TV Series</div>
+            <div class="service-sub">Powered by Jellyfin Cinema</div>
           </div>
         </div>
-        <div class="status-tag" id="jellyfinStatus"><span class="dot"></span> Online</div>
+        <div class="badge-status" id="homeJfBadge"><span class="status-dot"></span> Checking</div>
       </div>
-      <p class="card-desc">Stream full HD & 4K movies, shows, and downloaded series without internet or buffering.</p>
-      <div class="card-action">
-        <span>Launch Cinema Player</span>
-        <span class="action-arrow">→</span>
+      <p class="service-desc">Stream movies, family videos, and shows in full quality directly to any phone, laptop, or TV browser without internet buffering.</p>
+      <div style="display: flex; gap: 8px;">
+        <a href="#" id="homeJfBtn" target="_blank" class="btn-primary" style="flex: 2;">Launch Cinema →</a>
+        <button onclick="switchTab('movies', document.querySelectorAll('.tab-btn')[1])" class="btn-secondary" style="flex: 1;">Login Info</button>
       </div>
-    </a>
+    </div>
 
-    <!-- Card 2: Minecraft Multiplayer -->
-    <div class="card" style="cursor: default;">
-      <div class="card-top">
-        <div class="card-brand">
-          <div class="card-icon">⛏️</div>
+    <!-- Minecraft Overview Card -->
+    <div class="service-card card-minecraft">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">⛏️</div>
           <div>
-            <div class="card-title">Minecraft Multiplayer</div>
-            <div class="card-tag">Java + Bedrock Crossplay World</div>
+            <div class="service-title">Minecraft Server</div>
+            <div class="service-sub">PaperMC 1.21 Survival World</div>
           </div>
         </div>
-        <div class="status-tag" id="mcStatus"><span class="dot"></span> Online</div>
+        <div class="badge-status" id="homeMcBadge"><span class="status-dot"></span> Checking</div>
       </div>
-      <p class="card-desc">Our 24/7 survival world. Anyone on Wi-Fi can join from PC, iPhone, Android, or Console!</p>
+      <p class="service-desc">Join our persistent 24/7 multiplayer world. Cross-play enabled for Java (PC) and Bedrock (Phone, Tablet, Console).</p>
+      <div class="spec-grid">
+        <div class="spec-card" onclick="copyText(serverIP + ':25565', 'Java IP')">
+          <div class="spec-label">Java Edition (PC)</div>
+          <div class="spec-val"><span id="homeJavaIp">--:25565</span> 📋</div>
+        </div>
+        <div class="spec-card" onclick="copyText(serverIP, 'Bedrock IP (Port 19132)')">
+          <div class="spec-label">Bedrock (Mobile/Xbox)</div>
+          <div class="spec-val">Port: 19132 📋</div>
+        </div>
+      </div>
+      <a href="#" id="homeDashboardBtn" target="_blank" class="btn-secondary" style="width: 100%;">
+        🤖 Open PocketMC & Peppy Bot Dashboard →
+      </a>
+    </div>
+
+    <!-- File Drop Quick Card -->
+    <div class="service-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">📤</div>
+          <div>
+            <div class="service-title">PeppyDrop (File & Photo Drop)</div>
+            <div class="service-sub">Direct Wi-Fi Local Sharing</div>
+          </div>
+        </div>
+        <div class="badge-status"><span class="status-dot"></span> Ready</div>
+      </div>
+      <p class="service-desc">Transfer photos and files from your device directly to home storage without WhatsApp compression or cloud accounts.</p>
+      <button onclick="switchTab('files', document.querySelectorAll('.tab-btn')[3])" class="btn-secondary" style="width: 100%;">
+        Open File Drop Zone →
+      </button>
+    </div>
+
+    <!-- First Time Connect Card -->
+    <div class="service-card" style="text-align: center; border-color: rgba(0,229,255,0.25);">
+      <div style="font-size: 26px; margin-bottom: 6px;">📱</div>
+      <div style="font-weight: 700; font-size: 16px;">Invite Family & Guests</div>
+      <p style="font-size: 12.5px; color: var(--text-muted); margin: 6px 0 14px;">
+        Point any camera at the QR code to open Peppy Home Hub on any phone connected to our Wi-Fi.
+      </p>
+      <button onclick="switchTab('status', document.querySelectorAll('.tab-btn')[4])" class="btn-secondary">
+        Show Hub QR Code & Network Status
+      </button>
+    </div>
+  </section>
+
+  <!-- ══════════════ TAB 2: MOVIES & TV ══════════════ -->
+  <section class="tab-content" id="tab-movies">
+    <div class="service-card card-jellyfin">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">🍿</div>
+          <div>
+            <div class="service-title">Movies & TV Series</div>
+            <div class="service-sub">Jellyfin Media Center</div>
+          </div>
+        </div>
+        <div class="badge-status" id="moviesStatusBadge"><span class="status-dot"></span> Checking</div>
+      </div>
+      <p class="service-desc">Browse and stream movies and shows from our home library. Works on mobile phones, tablets, PCs, and Smart TVs.</p>
       
-      <!-- IP copy boxes -->
-      <div class="mc-specs">
-        <div class="mc-spec-btn" onclick="copyText(serverIP + ':25565', 'Java Server IP')">
-          <div class="mc-spec-label">Java (PC / Mac)</div>
-          <div class="mc-spec-val"><span id="javaIP">--:25565</span> 📋</div>
+      <a href="#" id="moviesLaunchBtn" target="_blank" class="btn-primary" style="margin-bottom: 12px;">
+        🎬 Open Movies & TV (Jellyfin)
+      </a>
+
+      <button onclick="copyText(`http://${serverIP}:8096`, 'Jellyfin URL')" class="btn-secondary" style="width: 100%; margin-bottom: 16px;">
+        📋 Copy Jellyfin Streamer URL
+      </button>
+
+      <!-- Guest Login Help Accordion -->
+      <div class="accordion-box open">
+        <div class="accordion-header" onclick="toggleAcc(this)">
+          <span>🔑 Jellyfin Guest Sign-In Help</span>
+          <span class="acc-arrow">▼</span>
         </div>
-        <div class="mc-spec-btn" onclick="copyBedrock()">
-          <div class="mc-spec-label">Bedrock (Phone / Console)</div>
-          <div class="mc-spec-val">Port: 19132 📋</div>
+        <div class="accordion-body">
+          <p>• <strong>Guests:</strong> Ask the home server administrator for the family or guest account details to sign in.</p>
+          <p style="margin-top: 6px;">• <strong>Smart TV & Jellyfin App:</strong> Install the free <em>Jellyfin</em> app on Android TV/Firestick/Apple TV and enter the server address: <code id="jfCodeAddr" style="color:var(--cyan)">http://...:8096</code></p>
+          <p style="margin-top: 6px; font-size: 11px; color:#94a3b8;">* Passwords are never embedded in URLs for your family's account security.</p>
         </div>
       </div>
 
-      <div style="margin-top: 10px;">
-        <a href="#" id="mcDashboardLink" target="_blank" class="card-action" style="text-decoration: none;">
-          <span>🤖 Open PocketMC Dashboard & Peppy Bot</span>
-          <span class="action-arrow">→</span>
+      <!-- Offline Troubleshooting -->
+      <div class="accordion-box" id="jfTroubleBox" style="margin-top: 10px;">
+        <div class="accordion-header" onclick="toggleAcc(this)">
+          <span>🛠️ Troubleshooting Connection</span>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="accordion-body">
+          <p>If Jellyfin says <strong>Offline</strong>:</p>
+          <p>1. Ensure your device is connected to the primary home Wi-Fi network.</p>
+          <p>2. Ask the server administrator to verify Jellyfin is started in Termux.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ TAB 3: MINECRAFT ══════════════ -->
+  <section class="tab-content" id="tab-minecraft">
+    <div class="service-card card-minecraft">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">⛏️</div>
+          <div>
+            <div class="service-title">Minecraft Server</div>
+            <div class="service-sub">PaperMC Survival Multiplayer</div>
+          </div>
+        </div>
+        <div class="badge-status" id="mcStatusBadge"><span class="status-dot"></span> Checking</div>
+      </div>
+      <p class="service-desc">Welcome to our home survival realm! Builds, progression, and inventories are saved persistently.</p>
+
+      <!-- Connection Details -->
+      <div class="spec-grid">
+        <div class="spec-card" onclick="copyText(serverIP + ':25565', 'Java Server IP')">
+          <div class="spec-label">Java Edition (PC / Mac)</div>
+          <div class="spec-val"><span id="mcTabJavaIp">--:25565</span> 📋</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click to copy address</div>
+        </div>
+        <div class="spec-card" onclick="copyText(serverIP, 'Bedrock IP (Port: 19132)')">
+          <div class="spec-label">Bedrock (Phone, Console, iPad)</div>
+          <div class="spec-val">Port: 19132 📋</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Server IP: <span id="mcTabBedrockIp">--</span></div>
+        </div>
+      </div>
+
+      <!-- Step by step join guide -->
+      <div class="accordion-box open">
+        <div class="accordion-header" onclick="toggleAcc(this)">
+          <span>📖 How to Join for the First Time</span>
+          <span class="acc-arrow">▼</span>
+        </div>
+        <div class="accordion-body">
+          <p><strong>Java Edition (PC/Mac):</strong></p>
+          <p>1. Open Minecraft ➔ Multiplayer ➔ Add Server.</p>
+          <p>2. Paste the Server Address copied above and hit <em>Done</em>.</p>
+          <p style="margin-top: 8px;"><strong>Bedrock Edition (iPhone, Android, Windows):</strong></p>
+          <p>1. Open Minecraft ➔ Play ➔ Servers ➔ Add Server.</p>
+          <p>2. Server Address: <code style="color:var(--cyan)" id="mcBedrockCode">--</code> | Port: <code style="color:var(--cyan)">19132</code>.</p>
+        </div>
+      </div>
+
+      <!-- Dashboard & Bot launcher -->
+      <div style="margin-top: 14px;">
+        <a href="#" id="mcTabDashboardBtn" target="_blank" class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+          🤖 Open PocketMC Web Console & Peppy Bot →
         </a>
       </div>
     </div>
+  </section>
 
-  </div>
-
-  <!-- Section: File Drop -->
-  <div class="section-label">📤 KhureDrop (Fast Local File Sharing)</div>
-  <div class="card" style="padding: 16px;">
-    <p class="card-desc" style="margin-bottom: 12px;">Send photos, videos, or documents directly to the server's SD card. No WhatsApp compression, no login required.</p>
-    
-    <div class="drop-box" id="dropBox" onclick="document.getElementById('fileInput').click()">
-      <div class="drop-icon">📁</div>
-      <div class="drop-title">Tap to select or drop files here</div>
-      <div class="drop-hint">Instant high-speed Wi-Fi upload to home storage</div>
-      <input type="file" id="fileInput" class="file-input" multiple onchange="handleFiles(this.files)">
-    </div>
-
-    <!-- Progress -->
-    <div class="upload-status" id="uploadStatus">
-      <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600;">
-        <span id="uploadStatusText">Uploading files...</span>
-        <span id="uploadPct">0%</span>
+  <!-- ══════════════ TAB 4: FILE DROP ══════════════ -->
+  <section class="tab-content" id="tab-files">
+    <div class="service-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">📤</div>
+          <div>
+            <div class="service-title">PeppyDrop</div>
+            <div class="service-sub">High-Speed Local File Sharing</div>
+          </div>
+        </div>
+        <div class="badge-status"><span class="status-dot"></span> Ready</div>
       </div>
-      <div class="progress-bar-wrap">
-        <div class="progress-fill" id="progressFill"></div>
+      <p class="service-desc">Direct Wi-Fi file upload. Files are stored securely on the server's storage without third-party cloud uploads.</p>
+
+      <!-- Dropzone -->
+      <div class="dropzone" id="dropZone" onclick="document.getElementById('fileUploadInput').click()">
+        <div class="drop-icon">📁</div>
+        <div class="drop-main">Tap to choose or drag & drop files here</div>
+        <div class="drop-sub">Photos, videos, or documents (up to 200MB per batch)</div>
+        <input type="file" id="fileUploadInput" class="file-input" multiple onchange="uploadFiles(this.files)">
+      </div>
+
+      <!-- Upload Progress Box -->
+      <div class="upload-progress-box" id="uploadProgBox">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;">
+          <span id="uploadLabel">Uploading...</span>
+          <span id="uploadPercentage" style="color:var(--cyan)">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+
+      <!-- Dropped files list -->
+      <div class="section-heading" style="margin-top: 20px;">Shared Files on Server</div>
+      <div class="file-list" id="filesContainer">
+        <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 14px;">Loading files...</div>
       </div>
     </div>
+  </section>
 
-    <!-- Dropped files list -->
-    <div class="section-label" style="margin: 16px 0 6px; font-size: 11px;">Recent Dropped Files</div>
-    <div class="file-list" id="fileList">
-      <div style="color: var(--muted); font-size: 12px; text-align: center; padding: 12px;">No files dropped yet today.</div>
-    </div>
-  </div>
+  <!-- ══════════════ TAB 5: STATUS ══════════════ -->
+  <section class="tab-content" id="tab-status">
+    <div class="service-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">📊</div>
+          <div>
+            <div class="service-title">Server Telemetry & QR</div>
+            <div class="service-sub">Real-Time Phone & Service Health</div>
+          </div>
+        </div>
+        <div class="badge-status" id="lastCheckTag">Checking</div>
+      </div>
 
-  <!-- Section: Share & QR -->
-  <div class="section-label">📱 Connect New Guests</div>
-  <div class="qr-card">
-    <div style="font-weight: 700; font-size: 16px;">Scan to open KHURE-SERVER</div>
-    <p style="font-size: 12px; color: var(--muted); margin-top: 4px;">Point any phone camera at this QR code while connected to home Wi-Fi.</p>
-    
-    <div class="qr-frame">
-      <div id="qrcode"></div>
+      <!-- Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Battery Level</div>
+          <div class="metric-value" id="statBattery">--%</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Storage Free</div>
+          <div class="metric-value" id="statStorage">-- GB</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Local IP</div>
+          <div class="metric-value" id="statIp" style="font-size: 14px; font-family: monospace;">--</div>
+        </div>
+      </div>
+
+      <!-- Real Services Health Checklist -->
+      <div class="section-heading">Service Availability</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="file-row">
+          <span>🍿 Jellyfin Media Server</span>
+          <span class="badge-status" id="chkJf"><span class="status-dot"></span> Checking</span>
+        </div>
+        <div class="file-row">
+          <span>⛏️ Minecraft Java Server (:25565)</span>
+          <span class="badge-status" id="chkMc"><span class="status-dot"></span> Checking</span>
+        </div>
+        <div class="file-row">
+          <span>🎮 Minecraft Bedrock (:19132)</span>
+          <span class="badge-status" id="chkBedrock"><span class="status-dot"></span> Checking</span>
+        </div>
+        <div class="file-row">
+          <span>🤖 Peppy AI Bot (:8089)</span>
+          <span class="badge-status" id="chkBot"><span class="status-dot"></span> Checking</span>
+        </div>
+        <div class="file-row">
+          <span>⚙️ PocketMC Dashboard (:8088)</span>
+          <span class="badge-status" id="chkDash"><span class="status-dot"></span> Checking</span>
+        </div>
+      </div>
+
+      <!-- QR Code Section -->
+      <div class="section-heading" style="margin-top: 24px;">Scan to Open Portal</div>
+      <div class="qr-box">
+        <div style="font-weight: 700; font-size: 15px;">Connect with QR Code</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 10px;">
+          Scan while connected to home Wi-Fi to open this portal instantly.
+        </p>
+        <div class="qr-frame">
+          <div id="hubQrCode"></div>
+        </div>
+        <div style="font-family: monospace; font-size: 13px; color: var(--cyan); font-weight: 700;" id="qrUrlDisplay">
+          http://...
+        </div>
+        <div style="margin-top: 10px;">
+          <button onclick="copyText(portalUrl, 'Hub Address')" class="btn-secondary">
+            📋 Copy Hub Link
+          </button>
+        </div>
+      </div>
     </div>
-    
-    <div style="font-family: monospace; font-size: 13px; color: #a5b4fc; font-weight: 700;" id="portalUrlDisplay">
-      http://...
+  </section>
+
+  <!-- ══════════════ TAB 6: HELP & FAQ ══════════════ -->
+  <section class="tab-content" id="tab-help">
+    <div class="service-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="service-icon">❓</div>
+          <div>
+            <div class="service-title">Help & Getting Started</div>
+            <div class="service-sub">Frequently Asked Questions</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-heading">Quick 3-Step Start</div>
+      <div style="background: var(--card-inner); border: 1px solid var(--border); border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.6; color: #cbd5e1; margin-bottom: 16px;">
+        <p>1. <strong>Connect to Home Wi-Fi:</strong> Ensure you are on the primary family Wi-Fi network.</p>
+        <p>2. <strong>Choose Your Service:</strong> Tap <em>Movies & TV</em> for cinema, or <em>Minecraft</em> to play.</p>
+        <p>3. <strong>Need Help?</strong> Contact the home server admin if you need personal credentials.</p>
+      </div>
+
+      <div class="section-heading">Common Questions</div>
+
+      <div class="faq-item open">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>Why does a service say "Offline"?</span>
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          The server runs health checks in real time. If Minecraft or Jellyfin is offline, the service process may simply be stopped. Ask the host to start it via Termux.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>The page isn't opening on another device</span>
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          Ensure you are connected to the exact same home Wi-Fi network. If your router has "Guest Isolation" or "AP Isolation" enabled, devices cannot communicate directly.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>Can I access this outside the house?</span>
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          By design, this hub is locked to the local home Wi-Fi for speed, privacy, and security. Remote access is only possible if the host configures a private tunnel (like Playit).
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>How do I upload files from my phone?</span>
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          Go to the <strong>File Drop</strong> tab, tap the box, choose your photos or videos, and they will upload directly to the server at full Wi-Fi speed.
+        </div>
+      </div>
     </div>
-    <button onclick="copyText(portalUrl, 'Portal URL')" class="card-action" style="margin: 10px auto 0; max-width: 200px; cursor: pointer;">
-      <span>Copy Hub Link</span>
-      <span>📋</span>
-    </button>
-  </div>
+  </section>
 
 </div>
 
@@ -544,17 +964,32 @@
   let serverIP = window.location.hostname || '127.0.0.1';
   let portalUrl = window.location.origin;
 
-  document.getElementById('portalUrlDisplay').textContent = portalUrl;
+  // Live clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('liveClock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
 
-  // Generate QR code for this hub
-  new QRCode(document.getElementById("qrcode"), {
-    text: portalUrl,
-    width: 160,
-    height: 160,
-    colorDark: "#090a10",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.M
-  });
+  // Navigation tab switcher
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const target = document.getElementById('tab-' + tabId);
+    if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (tabId === 'files') fetchFiles();
+  }
+
+  function toggleAcc(el) {
+    el.parentElement.classList.toggle('open');
+  }
+
+  function toggleFaq(el) {
+    el.parentElement.classList.toggle('open');
+  }
 
   function toast(msg) {
     const t = document.getElementById('toast');
@@ -567,86 +1002,118 @@
     navigator.clipboard.writeText(str).then(() => toast('Copied ' + label + ': ' + str)).catch(() => toast('Copy: ' + str));
   }
 
-  function copyBedrock() {
-    copyText(serverIP, 'Bedrock IP (Port is 19132)');
+  // Initialize QR Code
+  let qrCodeInstance = null;
+  function renderQrCode(url) {
+    const el = document.getElementById("hubQrCode");
+    el.innerHTML = "";
+    qrCodeInstance = new QRCode(el, {
+      text: url,
+      width: 170,
+      height: 170,
+      colorDark: "#060810",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
   }
 
-  // Fetch telemetry & service status
+  // Live Health Checks and Telemetry
   async function fetchStatus() {
     try {
       const res = await fetch('/api/status');
       const data = await res.json();
 
       serverIP = data.local_ip || serverIP;
-      portalUrl = `http://${serverIP}:${data.portal_port || 7777}`;
-      document.getElementById('portalUrlDisplay').textContent = portalUrl;
+      portalUrl = `http://${serverIP}:${data.hub_port || 7777}`;
 
-      // Update links
-      document.getElementById('jellyfinLink').href = `http://${serverIP}:8096`;
-      document.getElementById('mcDashboardLink').href = `http://${serverIP}:8088`;
-      document.getElementById('javaIP').textContent = `${serverIP}:25565`;
+      document.getElementById('networkIpPill').textContent = serverIP;
+      document.getElementById('qrUrlDisplay').textContent = portalUrl;
+      document.getElementById('lastCheckTag').textContent = `Checked: ${data.check_time_str || 'now'}`;
 
-      // Telemetry
-      if (data.battery) {
-        document.getElementById('battText').textContent = `${data.battery.level}% (${data.battery.temp})`;
-      }
-      if (data.storage) {
-        document.getElementById('storageText').textContent = `${data.storage.free_gb} GB Free`;
-      }
+      // Update service links
+      const jfUrl = `http://${serverIP}:8096`;
+      const dashUrl = `http://${serverIP}:8088`;
 
-      // Services status tags
-      const jf = data.services.jellyfin;
-      const jfTag = document.getElementById('jellyfinStatus');
-      if (jf && jf.online) {
-        jfTag.className = 'status-tag';
-        jfTag.innerHTML = '<span class="dot"></span> Online';
-      } else {
-        jfTag.className = 'status-tag offline';
-        jfTag.innerHTML = '<span class="dot red"></span> Offline';
-      }
+      document.getElementById('homeJfBtn').href = jfUrl;
+      document.getElementById('moviesLaunchBtn').href = jfUrl;
+      document.getElementById('jfCodeAddr').textContent = jfUrl;
 
-      const mc = data.services.minecraft_java;
-      const mcTag = document.getElementById('mcStatus');
-      if (mc && mc.online) {
-        mcTag.className = 'status-tag';
-        mcTag.innerHTML = '<span class="dot"></span> Online';
-      } else {
-        mcTag.className = 'status-tag offline';
-        mcTag.innerHTML = '<span class="dot red"></span> Offline';
+      document.getElementById('homeDashboardBtn').href = dashUrl;
+      document.getElementById('mcTabDashboardBtn').href = dashUrl;
+
+      document.getElementById('homeJavaIp').textContent = `${serverIP}:25565`;
+      document.getElementById('mcTabJavaIp').textContent = `${serverIP}:25565`;
+      document.getElementById('mcTabBedrockIp').textContent = serverIP;
+      document.getElementById('mcBedrockCode').textContent = serverIP;
+
+      // Status tags helper
+      function applyBadge(elId, isOnline) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        if (isOnline) {
+          el.className = 'badge-status';
+          el.innerHTML = '<span class="status-dot"></span> Online';
+        } else {
+          el.className = 'badge-status offline';
+          el.innerHTML = '<span class="status-dot red"></span> Offline';
+        }
       }
 
-    } catch (e) {}
+      const s = data.services;
+      applyBadge('homeJfBadge', s.jellyfin.online);
+      applyBadge('moviesStatusBadge', s.jellyfin.online);
+      applyBadge('chkJf', s.jellyfin.online);
+
+      applyBadge('homeMcBadge', s.minecraft.online);
+      applyBadge('mcStatusBadge', s.minecraft.online);
+      applyBadge('chkMc', s.minecraft.online);
+      applyBadge('chkBedrock', s.minecraft.bedrock_online);
+
+      applyBadge('chkDash', s.mc_dashboard.online);
+      applyBadge('chkBot', s.peppy_bot.online);
+
+      // System telemetry
+      if (data.metrics) {
+        document.getElementById('statBattery').textContent = `${data.metrics.battery_pct}% (${data.metrics.battery_temp})`;
+        document.getElementById('statStorage').textContent = `${data.metrics.storage_free_gb} GB`;
+        document.getElementById('statIp').textContent = serverIP;
+      }
+
+    } catch (e) {
+      document.getElementById('globalStateDot').className = 'status-dot red';
+      document.getElementById('globalStateText').textContent = 'Server Unreachable';
+    }
   }
 
-  // Fetch dropped files
+  // Fetch Dropped Files
   async function fetchFiles() {
     try {
       const res = await fetch('/api/files');
       const data = await res.json();
-      const list = document.getElementById('fileList');
+      const container = document.getElementById('filesContainer');
 
       if (!data.files || data.files.length === 0) {
-        list.innerHTML = '<div style="color: var(--muted); font-size: 12px; text-align: center; padding: 12px;">No files dropped yet today.</div>';
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 18px;">No files dropped yet today. Tap above to drop your first file!</div>';
         return;
       }
 
-      list.innerHTML = data.files.map(f => `
-        <div class="file-item">
-          <div class="file-info">
-            <span>📄</span>
+      container.innerHTML = data.files.map(f => `
+        <div class="file-row">
+          <div class="file-meta">
+            <span style="font-size: 18px;">📄</span>
             <div>
               <div class="file-name" title="${f.name}">${f.name}</div>
-              <div class="file-size">${f.size} · ${f.time}</div>
+              <div class="file-sub">${f.size} · ${f.date_str}</div>
             </div>
           </div>
-          <a href="/download/${encodeURIComponent(f.name)}" class="dl-btn" download>Download</a>
+          <a href="/download/${encodeURIComponent(f.name)}" class="btn-secondary" style="padding: 6px 12px; font-size: 11px;" download>Download</a>
         </div>
       `).join('');
     } catch (e) {}
   }
 
-  // File Upload Logic
-  function handleFiles(files) {
+  // File Upload Handling
+  function uploadFiles(files) {
     if (!files || files.length === 0) return;
 
     const formData = new FormData();
@@ -654,13 +1121,13 @@
       formData.append('files', files[i]);
     }
 
-    const statusWrap = document.getElementById('uploadStatus');
-    const fill = document.getElementById('progressFill');
-    const pct = document.getElementById('uploadPct');
-    const label = document.getElementById('uploadStatusText');
+    const progBox = document.getElementById('uploadProgBox');
+    const bar = document.getElementById('progressBar');
+    const pct = document.getElementById('uploadPercentage');
+    const label = document.getElementById('uploadLabel');
 
-    statusWrap.style.display = 'block';
-    fill.style.width = '0%';
+    progBox.style.display = 'block';
+    bar.style.width = '0%';
     pct.textContent = '0%';
     label.textContent = `Uploading ${files.length} file(s)...`;
 
@@ -670,25 +1137,25 @@
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         const percent = Math.round((e.loaded / e.total) * 100);
-        fill.style.width = percent + '%';
+        bar.style.width = percent + '%';
         pct.textContent = percent + '%';
       }
     };
 
     xhr.onload = () => {
       if (xhr.status === 200) {
-        toast('✅ Files uploaded successfully!');
+        toast('✅ Upload successful!');
         label.textContent = 'Upload complete!';
-        setTimeout(() => { statusWrap.style.display = 'none'; }, 2000);
+        setTimeout(() => { progBox.style.display = 'none'; }, 2000);
         fetchFiles();
       } else {
         toast('❌ Upload failed.');
-        label.textContent = 'Error uploading.';
+        label.textContent = 'Upload error.';
       }
     };
 
     xhr.onerror = () => {
-      toast('❌ Network error during upload.');
+      toast('❌ Connection error during upload.');
       label.textContent = 'Upload failed.';
     };
 
@@ -696,19 +1163,20 @@
   }
 
   // Drag & drop listeners
-  const dropBox = document.getElementById('dropBox');
+  const dropZone = document.getElementById('dropZone');
   ['dragenter', 'dragover'].forEach(name => {
-    dropBox.addEventListener(name, (e) => { e.preventDefault(); dropBox.classList.add('dragover'); });
+    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
   });
   ['dragleave', 'drop'].forEach(name => {
-    dropBox.addEventListener(name, (e) => { e.preventDefault(); dropBox.classList.remove('dragover'); });
+    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
   });
-  dropBox.addEventListener('drop', (e) => {
-    handleFiles(e.dataTransfer.files);
+  dropZone.addEventListener('drop', (e) => {
+    uploadFiles(e.dataTransfer.files);
   });
 
-  // Init
-  fetchStatus();
+  // Startup
+  renderQrCode(portalUrl);
+  fetchStatus().then(() => renderQrCode(portalUrl));
   fetchFiles();
   setInterval(fetchStatus, 4000);
 </script>
