@@ -38,13 +38,14 @@ PY=$(command -v python3 || command -v python)
 PORTAL_PATH="$HOME/.pocket-mc/portal"
 
 stop_portal() {
+    if [ -f "$PORTAL_PATH/portal.pid" ]; then
+        PID=$(cat "$PORTAL_PATH/portal.pid" 2>/dev/null || true)
+        if [ -n "$PID" ]; then kill -9 "$PID" 2>/dev/null || true; fi
+        rm -f "$PORTAL_PATH/portal.pid"
+    fi
     pkill -9 -f "app.py" 2>/dev/null || true
     pkill -9 -f "portal" 2>/dev/null || true
     if command -v fuser >/dev/null 2>&1; then fuser -k 7777/tcp 2>/dev/null || true; fi
-    if command -v lsof >/dev/null 2>&1; then
-        PIDS=$(lsof -ti:7777 2>/dev/null || true)
-        if [ -n "$PIDS" ]; then kill -9 $PIDS 2>/dev/null || true; fi
-    fi
     sleep 1
 }
 
@@ -57,8 +58,10 @@ case "$1" in
         tail -f "$HOME/.pocket-mc/portal.log"
         ;;
     status)
-        if pgrep -f "app.py" > /dev/null; then
-            echo "[✔] Peppy Home Hub is running on port 7777."
+        if [ -f "$PORTAL_PATH/portal.pid" ] && kill -0 $(cat "$PORTAL_PATH/portal.pid" 2>/dev/null) 2>/dev/null; then
+            echo "[✔] Peppy Home Hub is running (PID: $(cat "$PORTAL_PATH/portal.pid"))."
+        elif pgrep -f "app.py" > /dev/null; then
+            echo "[✔] Peppy Home Hub is running."
         else
             echo "[!] Peppy Home Hub is offline."
             if [ -f "$HOME/.pocket-mc/portal.log" ]; then
@@ -70,11 +73,13 @@ case "$1" in
     restart)
         stop_portal
         cd "$PORTAL_PATH"
-        nohup "$PY" app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
+        "$PY" -u app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
+        PID=$!
+        echo "$PID" > "$PORTAL_PATH/portal.pid"
         sleep 2
-        if ! pgrep -f "app.py" > /dev/null; then
-            echo "❌ [ERROR] Peppy Home Hub failed to start! Check ~/.pocket-mc/portal.log:"
-            tail -n 25 "$HOME/.pocket-mc/portal.log"
+        if ! kill -0 "$PID" 2>/dev/null; then
+            echo "❌ [ERROR] Peppy Home Hub failed to start! Log contents:"
+            cat "$HOME/.pocket-mc/portal.log"
             exit 1
         fi
         IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1 || echo "localhost")
@@ -83,17 +88,19 @@ case "$1" in
     start|"")
         stop_portal
         cd "$PORTAL_PATH"
-        nohup "$PY" app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
+        "$PY" -u app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
+        PID=$!
+        echo "$PID" > "$PORTAL_PATH/portal.pid"
         sleep 2
-        if ! pgrep -f "app.py" > /dev/null; then
-            echo "❌ [ERROR] Peppy Home Hub failed to start! Check ~/.pocket-mc/portal.log:"
-            tail -n 25 "$HOME/.pocket-mc/portal.log"
+        if ! kill -0 "$PID" 2>/dev/null; then
+            echo "❌ [ERROR] Peppy Home Hub failed to start! Log contents:"
+            cat "$HOME/.pocket-mc/portal.log"
             exit 1
         fi
         IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1 || echo "localhost")
         echo ""
         echo "=========================================================="
-        echo "  🚀 Peppy Home Hub is LIVE on port 7777!                "
+        echo "  🚀 Peppy Home Hub is LIVE!                              "
         echo "  Open on any device connected to your home Wi-Fi:       "
         echo "  👉 http://${IP}:7777                                   "
         echo "=========================================================="

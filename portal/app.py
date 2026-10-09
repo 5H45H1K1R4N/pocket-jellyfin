@@ -854,29 +854,37 @@ def main():
     free_port(PORT)
     db.init_db()
     ip = get_local_ip()
+
+    server = None
+    active_port = PORT
+    for port_candidate in [PORT, 7778]:
+        for attempt in range(3):
+            try:
+                server = ReusableHTTPServer((HOST, port_candidate), PeppyHomeHubHandler)
+                active_port = port_candidate
+                break
+            except OSError as e:
+                if "Address already in use" in str(e) or getattr(e, "errno", None) in (98, 10048):
+                    sys.stderr.write(f"Port {port_candidate} busy (attempt {attempt+1}/3). Freeing socket...\n")
+                    free_port(port_candidate)
+                    time.sleep(1)
+                else:
+                    raise
+        if server:
+            break
+
+    if not server:
+        sys.stderr.write(f"Fatal: Could not bind to port {PORT} or 7778.\n")
+        sys.exit(1)
+
     print("=" * 64)
     print("  [Peppy Home Hub 2.0] Private Home Cloud & Media Portal")
-    print(f"  Live on Local Wi-Fi: http://{ip}:{PORT}")
+    print(f"  Live on Local Wi-Fi: http://{ip}:{active_port}")
     print(f"  Photos Directory:    {PHOTOS_DIR}")
     print(f"  File Drop Directory: {DROP_DIR}")
     print("=" * 64)
-
-    server = None
-    for attempt in range(5):
-        try:
-            server = ReusableHTTPServer((HOST, PORT), PeppyHomeHubHandler)
-            break
-        except OSError as e:
-            if "Address already in use" in str(e) or getattr(e, "errno", None) in (98, 10048):
-                sys.stderr.write(f"Port {PORT} busy (attempt {attempt+1}/5). Freeing socket...\n")
-                free_port(PORT)
-                time.sleep(1)
-            else:
-                raise
-
-    if not server:
-        sys.stderr.write(f"Fatal: Could not bind to port {PORT} after multiple attempts.\n")
-        sys.exit(1)
+    sys.stdout.flush()
+    sys.stderr.flush()
 
     try:
         server.serve_forever()
