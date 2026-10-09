@@ -948,40 +948,64 @@
     if (tabId === 'files') fetchFiles();
   }
 
+  // Auth Fetch Helper - automatically attaches Bearer token if present
+  async function authFetch(url, options = {}) {
+    options = options || {};
+    options.headers = options.headers || {};
+    const token = localStorage.getItem('peppy_token');
+    if (token && !options.headers['Authorization']) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return fetch(url, options);
+  }
+
   // Auth: Check Session
   async function checkAuth() {
     try {
-      const res = await fetch('/api/auth/me');
+      const res = await authFetch('/api/auth/me');
+      if (!res.ok) {
+        currentUser = null;
+        updateAuthUI(null);
+        return;
+      }
       const data = await res.json();
       if (data.authenticated && data.user) {
         currentUser = data.user;
-        document.getElementById('unauthBtn').style.display = 'none';
-        document.getElementById('authPill').style.display = 'flex';
-        document.getElementById('userDisplayName').textContent = currentUser.display_name || currentUser.username;
-        const badge = document.getElementById('userRoleBadge');
-        badge.textContent = currentUser.role;
-        badge.className = 'role-badge ' + (currentUser.role === 'admin' ? 'admin' : '');
-
-        document.getElementById('accModalUser').textContent = currentUser.username;
-        document.getElementById('accModalName').textContent = currentUser.display_name || currentUser.username;
-        document.getElementById('accModalRole').textContent = currentUser.role;
-
-        // Admin controls
-        if (currentUser.role === 'admin') {
-          document.getElementById('adminBar').classList.add('visible');
-        } else {
-          document.getElementById('adminBar').classList.remove('visible');
-        }
-        document.getElementById('homeGreeting').textContent = `Welcome, ${currentUser.display_name || currentUser.username}`;
+        updateAuthUI(currentUser);
       } else {
         currentUser = null;
-        document.getElementById('unauthBtn').style.display = 'block';
-        document.getElementById('authPill').style.display = 'none';
-        document.getElementById('adminBar').classList.remove('visible');
-        document.getElementById('homeGreeting').textContent = "Welcome Home";
+        updateAuthUI(null);
       }
     } catch (e) {
       currentUser = null;
+      updateAuthUI(null);
+    }
+  }
+
+  function updateAuthUI(user) {
+    if (user) {
+      document.getElementById('unauthBtn').style.display = 'none';
+      document.getElementById('authPill').style.display = 'flex';
+      document.getElementById('userDisplayName').textContent = user.display_name || user.username;
+      const badge = document.getElementById('userRoleBadge');
+      badge.textContent = user.role;
+      badge.className = 'role-badge ' + (user.role === 'admin' ? 'admin' : '');
+
+      document.getElementById('accModalUser').textContent = user.username;
+      document.getElementById('accModalName').textContent = user.display_name || user.username;
+      document.getElementById('accModalRole').textContent = user.role;
+
+      if (user.role === 'admin') {
+        document.getElementById('adminBar').classList.add('visible');
+      } else {
+        document.getElementById('adminBar').classList.remove('visible');
+      }
+      document.getElementById('homeGreeting').textContent = `Welcome, ${user.display_name || user.username}`;
+    } else {
+      document.getElementById('unauthBtn').style.display = 'block';
+      document.getElementById('authPill').style.display = 'none';
+      document.getElementById('adminBar').classList.remove('visible');
+      document.getElementById('homeGreeting').textContent = "Welcome Home";
     }
   }
 
@@ -990,37 +1014,54 @@
     e.preventDefault();
     const u = document.getElementById('loginUser').value.trim();
     const p = document.getElementById('loginPass').value;
+    const btn = document.querySelector('#loginModal button[type="submit"]');
+    if (btn) btn.disabled = true;
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ username: u, password: p })
       });
-      const data = await res.json();
-      if (res.ok) {
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error("Non-JSON login response:", res.status, jsonErr);
+        toast(`Server returned HTTP ${res.status}. Check server terminal.`);
+        return;
+      }
+      if (res.ok && data.user) {
+        if (data.token) {
+          localStorage.setItem('peppy_token', data.token);
+        }
         toast(`Signed in as ${data.user.display_name || data.user.username}`);
         closeModal('loginModal');
         await checkAuth();
         fetchPhotos();
         fetchFiles();
       } else {
-        toast(data.error || 'Login failed');
+        toast(data.error || `Login failed (HTTP ${res.status})`);
       }
     } catch (err) {
-      toast('Connection error during login');
+      console.error("Login fetch error:", err);
+      toast(`Connection error: Cannot reach server on port 7777`);
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
   // Auth: Logout
   async function handleLogout() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      closeModal('accountModal');
-      toast('Signed out');
-      await checkAuth();
-      fetchPhotos();
-      fetchFiles();
+      await authFetch('/api/auth/logout', { method: 'POST' });
     } catch (e) {}
+    localStorage.removeItem('peppy_token');
+    closeModal('accountModal');
+    toast('Signed out');
+    await checkAuth();
+    fetchPhotos();
+    fetchFiles();
   }
 
   // Photos: Fetch authorized photos & albums
@@ -1039,7 +1080,7 @@
 
     try {
       // Fetch albums
-      const aRes = await fetch('/api/albums');
+      const aRes = await authFetch('/api/albums');
       const aData = await aRes.json();
       allAlbums = aData.albums || [];
       renderAlbumPills();
@@ -1047,7 +1088,7 @@
       // Fetch photos
       let url = '/api/photos';
       if (activeAlbumFilter) url += `?album_id=${activeAlbumFilter}`;
-      const pRes = await fetch(url);
+      const pRes = await authFetch(url);
       const pData = await pRes.json();
       currentPhotosList = pData.photos || [];
       renderTimeline(currentPhotosList);
@@ -1231,6 +1272,9 @@
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/files/upload', true);
 
+    const token = localStorage.getItem('peppy_token');
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         const percent = Math.round((e.loaded / e.total) * 100);
@@ -1255,7 +1299,7 @@
   async function deleteFile(id) {
     if (!confirm('Are you sure you want to delete this file?')) return;
     try {
-      const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/files/${id}`, { method: 'DELETE' });
       if (res.ok) {
         toast('File deleted');
         fetchFiles();
@@ -1320,7 +1364,7 @@
 
   async function loadAdminUsers() {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await authFetch('/api/admin/users');
       const data = await res.json();
       allUsers = data.users || [];
       const list = document.getElementById('adminUserList');
@@ -1347,7 +1391,7 @@
     const r = document.getElementById('newRole').value;
 
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await authFetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: u, password: p, display_name: d, role: r })
@@ -1367,7 +1411,7 @@
   async function deleteUserAccount(id) {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
-      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
       if (res.ok) {
         toast('User deleted');
         loadAdminUsers();
@@ -1377,7 +1421,7 @@
 
   async function loadAdminAlbums() {
     try {
-      const res = await fetch('/api/albums');
+      const res = await authFetch('/api/albums');
       const data = await res.json();
       allAlbums = data.albums || [];
 
@@ -1396,7 +1440,7 @@
     const albumId = document.getElementById('permAlbumSelect').value;
     if (!albumId) return;
     try {
-      const res = await fetch(`/api/admin/albums/${albumId}/permissions`);
+      const res = await authFetch(`/api/admin/albums/${albumId}/permissions`);
       const data = await res.json();
       const list = document.getElementById('albumPermsList');
       const perms = data.permissions || [];
@@ -1415,7 +1459,7 @@
     const p = document.getElementById('albumPolicy').value;
 
     try {
-      const res = await fetch('/api/admin/albums', {
+      const res = await authFetch('/api/admin/albums', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: t, description: d, access_policy: p })
@@ -1434,7 +1478,7 @@
     const albumId = document.getElementById('permAlbumSelect').value;
     const userId = document.getElementById('permUserSelect').value;
     try {
-      const res = await fetch(`/api/admin/albums/${albumId}/permissions`, {
+      const res = await authFetch(`/api/admin/albums/${albumId}/permissions`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, can_view: true, can_download: true })
@@ -1450,7 +1494,7 @@
   let availableImportFiles = [];
   async function loadImportSources() {
     try {
-      const res = await fetch('/api/admin/import/sources');
+      const res = await authFetch('/api/admin/import/sources');
       const data = await res.json();
       const sel = document.getElementById('importSourceSelect');
       const sources = data.sources || [];
@@ -1473,7 +1517,7 @@
     box.innerHTML = 'Scanning folder...';
 
     try {
-      const res = await fetch(`/api/admin/import/browse?folder=${encodeURIComponent(folder)}`);
+      const res = await authFetch(`/api/admin/import/browse?folder=${encodeURIComponent(folder)}`);
       const data = await res.json();
       availableImportFiles = data.items || [];
 
@@ -1511,7 +1555,7 @@
     btn.textContent = `Importing ${chks.length} photo(s)...`;
 
     try {
-      const res = await fetch('/api/admin/import/execute', {
+      const res = await authFetch('/api/admin/import/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files: chks, album_id: albumId || null })

@@ -32,11 +32,18 @@ case "$1" in
         pkill -f "portal/app.py" 2>/dev/null || true
         echo "Peppy Home Hub stopped."
         ;;
+    log|logs)
+        tail -f "$HOME/.pocket-mc/portal.log"
+        ;;
     status)
         if pgrep -f "portal/app.py" > /dev/null; then
-            echo "Peppy Home Hub is running on port 7777."
+            echo "[✔] Peppy Home Hub is running on port 7777."
         else
-            echo "Peppy Home Hub is offline."
+            echo "[!] Peppy Home Hub is offline."
+            if [ -f "$HOME/.pocket-mc/portal.log" ]; then
+                echo "--- Last log entries ---"
+                tail -n 15 "$HOME/.pocket-mc/portal.log"
+            fi
         fi
         ;;
     restart)
@@ -44,15 +51,26 @@ case "$1" in
         sleep 1
         cd "$PORTAL_PATH"
         nohup "$PY" app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
-        sleep 1
+        sleep 2
+        if ! pgrep -f "portal/app.py" > /dev/null; then
+            echo "❌ [ERROR] Peppy Home Hub failed to start! Check ~/.pocket-mc/portal.log:"
+            tail -n 25 "$HOME/.pocket-mc/portal.log"
+            exit 1
+        fi
         IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1 || echo "localhost")
         echo "[✔] Peppy Home Hub restarted at: http://${IP}:7777"
         ;;
     start|"")
         pkill -f "portal/app.py" 2>/dev/null || true
+        sleep 1
         cd "$PORTAL_PATH"
         nohup "$PY" app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
-        sleep 1
+        sleep 2
+        if ! pgrep -f "portal/app.py" > /dev/null; then
+            echo "❌ [ERROR] Peppy Home Hub failed to start! Check ~/.pocket-mc/portal.log:"
+            tail -n 25 "$HOME/.pocket-mc/portal.log"
+            exit 1
+        fi
         IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1 || echo "localhost")
         echo ""
         echo "=========================================================="

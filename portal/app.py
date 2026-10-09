@@ -28,18 +28,44 @@ import db
 PORT = int(os.environ.get("PEPPY_PORT", 7777))
 HOST = "0.0.0.0"
 
-# Detect storage roots
+# Safe storage root resolution (Android Termux Scoped Storage compatible)
 SD_CARD_ID = "26B2-1AEB"
-SD_BASE = f"/storage/{SD_CARD_ID}" if os.path.exists(f"/storage/{SD_CARD_ID}") else os.path.expanduser("~/storage/shared")
-STORAGE_ROOT = SD_BASE if os.path.exists(SD_BASE) else os.path.expanduser("~")
 
-PHOTOS_DIR = os.path.join(STORAGE_ROOT, "PeppyPhotos")
+def get_writable_dir(sub_name: str) -> str:
+    """Find a genuinely writable directory, checking external storage then internal then home."""
+    candidates = [
+        f"/storage/{SD_CARD_ID}/{sub_name}",
+        os.path.expanduser(f"~/storage/shared/{sub_name}"),
+        os.path.expanduser(f"~/.pocket-mc/{sub_name}"),
+        os.path.expanduser(f"~/{sub_name}")
+    ]
+    for path in candidates:
+        try:
+            os.makedirs(path, exist_ok=True)
+            test_file = os.path.join(path, ".probe_write")
+            with open(test_file, "w") as f:
+                f.write("1")
+            os.remove(test_file)
+            return path
+        except Exception:
+            continue
+    fallback = os.path.expanduser(f"~/.pocket-mc/{sub_name}")
+    try:
+        os.makedirs(fallback, exist_ok=True)
+    except Exception:
+        pass
+    return fallback
+
+PHOTOS_DIR = get_writable_dir("PeppyPhotos")
 ORIGINALS_DIR = os.path.join(PHOTOS_DIR, "originals")
 THUMBS_DIR = os.path.join(PHOTOS_DIR, "thumbnails")
-DROP_DIR = os.path.join(STORAGE_ROOT, "PeppyDrop")
+DROP_DIR = get_writable_dir("PeppyDrop")
 
-for d in (PHOTOS_DIR, ORIGINALS_DIR, THUMBS_DIR, DROP_DIR):
-    os.makedirs(d, exist_ok=True)
+for d in (ORIGINALS_DIR, THUMBS_DIR):
+    try:
+        os.makedirs(d, exist_ok=True)
+    except Exception:
+        pass
 
 # Try loading Pillow for high-quality thumbnail resizing
 try:
@@ -177,6 +203,8 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie")
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
@@ -197,6 +225,7 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(file_size))
+        self.send_header("Access-Control-Allow-Origin", "*")
         if as_download:
             self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
         else:
@@ -235,10 +264,20 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie")
+        self.send_header("Content-Length", "0")
         self.end_headers()
 
     def do_GET(self):
+        try:
+            self._handle_get()
+        except Exception as e:
+            sys.stderr.write(f"[Server Error in GET {getattr(self, 'path', '')}]: {e}\n")
+            import traceback
+            traceback.print_exc()
+            self.send_json({"error": f"Server error: {str(e)}"}, 500)
+
+    def _handle_get(self):
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
@@ -458,6 +497,15 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def do_POST(self):
+        try:
+            self._handle_post()
+        except Exception as e:
+            sys.stderr.write(f"[Server Error in POST {getattr(self, 'path', '')}]: {e}\n")
+            import traceback
+            traceback.print_exc()
+            self.send_json({"error": f"Server error: {str(e)}"}, 500)
+
+    def _handle_post(self):
         parsed = urlparse(self.path)
         path = parsed.path
 
@@ -473,11 +521,14 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
                 self.send_json({"error": "Invalid username or password"}, 401)
                 return
 
-            # Set HTTP-only session cookie
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Set-Cookie", f"peppy_session={res['token']}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000")
+            # Set HTTP-only session cookie AND CORS headers
             body = json.dumps(res).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie")
+            self.send_header("Set-Cookie", f"peppy_session={res['token']}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -694,6 +745,15 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def do_DELETE(self):
+        try:
+            self._handle_delete()
+        except Exception as e:
+            sys.stderr.write(f"[Server Error in DELETE {getattr(self, 'path', '')}]: {e}\n")
+            import traceback
+            traceback.print_exc()
+            self.send_json({"error": f"Server error: {str(e)}"}, 500)
+
+    def _handle_delete(self):
         parsed = urlparse(self.path)
         path = parsed.path
 
@@ -726,19 +786,25 @@ class PeppyHomeHubHandler(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def log_message(self, format, *args):
-        # Quiet logging: does not print sensitive tokens or passwords
-        pass
+        # Write to stderr so Termux portal.log retains clean request traces
+        try:
+            sys.stderr.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {format % args}\n")
+        except Exception:
+            pass
+
+class ReusableHTTPServer(HTTPServer):
+    allow_reuse_address = True
 
 def main():
     db.init_db()
     ip = get_local_ip()
     print("=" * 64)
-    print("  🚀 Peppy Home Hub 2.0 — Private Home Cloud & Media Portal")
+    print("  [Peppy Home Hub 2.0] Private Home Cloud & Media Portal")
     print(f"  Live on Local Wi-Fi: http://{ip}:{PORT}")
     print(f"  Photos Directory:    {PHOTOS_DIR}")
     print(f"  File Drop Directory: {DROP_DIR}")
     print("=" * 64)
-    server = HTTPServer((HOST, PORT), PeppyHomeHubHandler)
+    server = ReusableHTTPServer((HOST, PORT), PeppyHomeHubHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
