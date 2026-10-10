@@ -1,0 +1,32 @@
+[
+  {
+    "id": "d9ff06414223e42e418ae1b5",
+    "username": "admin",
+    "displayName": "5Hα5HıkRαη",
+    "role": "admin",
+    "passwordHash": "scrypt$16384$3fbe0a1589156370774719b052d2c997$b7a7b1c4c7bd786d90869468a678df108812f3e8a9e927f5adc97133e69151ff",
+    "createdAt": 1791614007572,
+    "disabled": false,
+    "color": null
+  },
+  {
+    "id": "bb1a2dea8fb62602750b1a28",
+    "username": "adidude",
+    "displayName": "AdiDude",
+    "role": "family",
+    "passwordHash": "scrypt$16384$1f43bc9b5de8241e7203b25da4342e7f$29609dc1b7dc1da5daeca451a2ddc438cbde263a89651ff20bde43c16bc2233d",
+    "createdAt": 1791620567334,
+    "disabled": false,
+    "color": null
+  },
+  {
+    "id": "fe3d285653aa0c9616ea9ea2",
+    "username": "vinayak",
+    "displayName": "Vinayak",
+    "role": "family",
+    "passwordHash": "scrypt$16384$9ff216ddb074b3195f1dd3ce519e5ce0$6ea6674d4c13e3bff15c2ed95f4c2020a088cf8f2a5b26c9360fc863f15aed05",
+    "createdAt": 1791620567430,
+    "disabled": false,
+    "color": null
+  }
+]

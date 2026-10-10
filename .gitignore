@@ -8,3 +8,5 @@ Thumbs.db
 __pycache__/
 *.pyc
 *.db
+/portal/storage/
+/portal/data/sessions.json

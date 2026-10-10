@@ -1,0 +1,23 @@
+{
+  "host": "0.0.0.0",
+  "port": 7777,
+  "hubName": "Peppy Home Hub",
+  "jellyfin": {
+    "url": "http://127.0.0.1:8096",
+    "publicUrl": null,
+    "timeoutMs": 2500
+  },
+  "minecraft": {
+    "host": "127.0.0.1",
+    "port": 25565,
+    "publicAddress": "192.168.31.178",
+    "timeoutMs": 2500
+  },
+  "photoRoots": [],
+  "maxUploadMB": 2048,
+  "maxFilesPerUpload": 10,
+  "presenceOnlineMs": 180000,
+  "presenceIdleMs": 1200000,
+  "sessionDays": 30,
+  "photoRescanMinutes": 30
+}

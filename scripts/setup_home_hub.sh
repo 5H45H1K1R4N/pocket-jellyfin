@@ -2,17 +2,17 @@
 set -e
 
 echo "=========================================================="
-echo "    🚀 Peppy Home Hub — Futuristic Server Portal Setup    "
+echo "    🚀 Peppy Home Hub — Discord Portal Setup (:7777)     "
 echo "=========================================================="
 
 PORTAL_DIR="$HOME/.pocket-mc/portal"
 mkdir -p "$PORTAL_DIR"
 
-BASE_URL="https://raw.githubusercontent.com/5H45H1K1R4N/pocket-jellyfin/main/portal"
-
-# Ensure any stale portal or port 7777 occupant is terminated
+# Ensure any stale portal or port 7777 occupant is completely terminated
+echo "[*] Cleaning up old portal processes..."
 pkill -9 -f "app.py" 2>/dev/null || true
-pkill -9 -f "portal" 2>/dev/null || true
+pkill -9 -f "portal/server.js" 2>/dev/null || true
+pkill -9 -f "node server.js" 2>/dev/null || true
 if command -v fuser >/dev/null 2>&1; then fuser -k 7777/tcp 2>/dev/null || true; fi
 if command -v lsof >/dev/null 2>&1; then
     PIDS=$(lsof -ti:7777 2>/dev/null || true)
@@ -20,21 +20,24 @@ if command -v lsof >/dev/null 2>&1; then
 fi
 sleep 1
 
-echo "[1/3] Downloading Peppy Home Hub portal engine..."
-curl -fsSL "$BASE_URL/db.py?t=$(date +%s)" -o "$PORTAL_DIR/db.py"
-curl -fsSL "$BASE_URL/app.py?t=$(date +%s)" -o "$PORTAL_DIR/app.py"
-curl -fsSL "$BASE_URL/index.html?t=$(date +%s)" -o "$PORTAL_DIR/index.html"
-
-# Verify python
-if ! command -v python >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
-    echo "[*] Installing Python..."
-    pkg install python -y
+# Ensure Node.js is installed
+if ! command -v node >/dev/null 2>&1; then
+    echo "[*] Installing Node.js..."
+    pkg update -y
+    pkg install nodejs -y
 fi
+
+echo "[1/3] Downloading latest Peppy Home Hub portal engine..."
+# Remove any legacy Python portal files
+rm -f "$PORTAL_DIR/app.py" "$PORTAL_DIR/db.py" "$PORTAL_DIR/portal.db" 2>/dev/null || true
+rm -rf "$PORTAL_DIR/__pycache__" 2>/dev/null || true
+
+# Extract updated Node.js portal from main branch
+curl -fsSL https://github.com/5H45H1K1R4N/pocket-jellyfin/archive/refs/heads/main.tar.gz | tar -xz --strip-components=2 -C "$PORTAL_DIR" pocket-jellyfin-main/portal
 
 # Create easy launchers: 'peppy-hub', 'home-hub', and backward-compatible 'khure-server'
 cat << 'EOF' > "$PREFIX/bin/peppy-hub"
 #!/data/data/com.termux/files/usr/bin/bash
-PY=$(command -v python3 || command -v python)
 PORTAL_PATH="$HOME/.pocket-mc/portal"
 
 stop_portal() {
@@ -44,7 +47,8 @@ stop_portal() {
         rm -f "$PORTAL_PATH/portal.pid"
     fi
     pkill -9 -f "app.py" 2>/dev/null || true
-    pkill -9 -f "portal" 2>/dev/null || true
+    pkill -9 -f "portal/server.js" 2>/dev/null || true
+    pkill -9 -f "node server.js" 2>/dev/null || true
     if command -v fuser >/dev/null 2>&1; then fuser -k 7777/tcp 2>/dev/null || true; fi
     sleep 1
 }
@@ -60,7 +64,7 @@ case "$1" in
     status)
         if [ -f "$PORTAL_PATH/portal.pid" ] && kill -0 $(cat "$PORTAL_PATH/portal.pid" 2>/dev/null) 2>/dev/null; then
             echo "[✔] Peppy Home Hub is running (PID: $(cat "$PORTAL_PATH/portal.pid"))."
-        elif pgrep -f "app.py" > /dev/null; then
+        elif pgrep -f "server.js" > /dev/null; then
             echo "[✔] Peppy Home Hub is running."
         else
             echo "[!] Peppy Home Hub is offline."
@@ -73,7 +77,7 @@ case "$1" in
     restart)
         stop_portal
         cd "$PORTAL_PATH"
-        "$PY" -u app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
+        node server.js > "$HOME/.pocket-mc/portal.log" 2>&1 &
         PID=$!
         echo "$PID" > "$PORTAL_PATH/portal.pid"
         sleep 2
@@ -88,7 +92,7 @@ case "$1" in
     start|"")
         stop_portal
         cd "$PORTAL_PATH"
-        "$PY" -u app.py > "$HOME/.pocket-mc/portal.log" 2>&1 &
+        node server.js > "$HOME/.pocket-mc/portal.log" 2>&1 &
         PID=$!
         echo "$PID" > "$PORTAL_PATH/portal.pid"
         sleep 2
@@ -100,7 +104,7 @@ case "$1" in
         IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1 || echo "localhost")
         echo ""
         echo "=========================================================="
-        echo "  🚀 Peppy Home Hub is LIVE!                              "
+        echo "  🚀 Peppy Home Hub (Discord Edition) is LIVE!            "
         echo "  Open on any device connected to your home Wi-Fi:       "
         echo "  👉 http://${IP}:7777                                   "
         echo "=========================================================="
