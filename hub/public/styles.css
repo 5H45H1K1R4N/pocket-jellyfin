@@ -61,6 +61,8 @@
   --font-mono: 'JetBrains Mono', Consolas, monospace;
 }
 
+[hidden] { display: none !important; }
+
 /* ---------- Global Reset & Scrollbars ---------- */
 *, *::before, *::after {
   box-sizing: border-box;
