@@ -1,0 +1,16 @@
+{
+  "name": "peppy-home-hub",
+  "version": "2.0.0",
+  "description": "Discord-inspired home server portal",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
