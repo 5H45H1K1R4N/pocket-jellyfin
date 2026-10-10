@@ -104,6 +104,7 @@ const VIEWS = {
   'general-chat': `
     <div class="top-bar">
       <div class="top-bar-left"><span class="ch-hash">#</span><h2>general-chat</h2></div>
+      <div class=top-bar-right><span class=mobile-members-btn onclick=toggleMembers()>👥</span></div>
     </div>
     <div class="messages" id="chat-messages" style="overflow-y: auto;">
       <div class="welcome-message">
@@ -160,6 +161,7 @@ const VIEWS = {
   'minecraft-server': `
     <div class="top-bar">
       <div class="top-bar-left"><span class="ch-hash">#</span><h2>minecraft-server</h2></div>
+      <div class=top-bar-right><span class=mobile-members-btn onclick=toggleMembers()>👥</span></div>
     </div>
     <div class="messages" style="padding: 32px; justify-content: flex-start; overflow-y: auto; background: linear-gradient(180deg, rgba(35,165,90,0.03) 0%, transparent 400px);">
       <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px;">
@@ -298,6 +300,7 @@ function scrollToBottom() {
 
 function navigate(channelId) {
   state.currentChannel = channelId;
+  closeMenus();
   channels.forEach(ch => {
     if (ch.dataset.id === channelId) ch.classList.add('active');
     else ch.classList.remove('active');
@@ -404,3 +407,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initDragDrop();
   initModal();
 });
+
+
+// Mobile Menu Functions
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-open');
+}
+
+function toggleMembers() {
+  document.body.classList.toggle('members-open');
+}
+
+function closeMenus() {
+  document.body.classList.remove('sidebar-open');
+  document.body.classList.remove('members-open');
+}
