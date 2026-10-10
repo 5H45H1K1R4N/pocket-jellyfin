@@ -1,2 +1,1 @@
-﻿#!/data/data/com.termux/files/usr/bin/bash
-echo "Peppy Home Hub is currently being rebuilt from zero."
+#!/data/data/com.termux/files/usr/bin/bash`ncd ~/pocket-jellyfin/hub`nnpm install`nnode server.js
