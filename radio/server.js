@@ -24,7 +24,7 @@ const DEFAULTS = {
   musicDir: 'music',
   jingleDir: 'jingles',
   jingleEvery: 4, // play one clip from jingleDir after every N songs (0 = off)
-  djPin: '',
+  djPin: '7777',
 };
 
 function loadConfig() {
@@ -38,9 +38,9 @@ function loadConfig() {
   }
   cfg = { ...DEFAULTS, ...cfg };
   if (!cfg.djPin) {
-    cfg.djPin = String(crypto.randomInt(100000, 1000000));
+    cfg.djPin = '7777';
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2) + '\n');
-    console.log(existed ? 'Added a DJ PIN to config.json' : 'Created config.json with a new DJ PIN');
+    console.log(existed ? 'Added DJ PIN 7777 to config.json' : 'Created config.json with DJ PIN 7777');
   }
   if (process.env.PORT) cfg.port = Number(process.env.PORT);
   if (process.env.DJ_PIN) cfg.djPin = String(process.env.DJ_PIN);
@@ -487,7 +487,7 @@ server.listen(cfg.port, '0.0.0.0', () => {
   if (!ips.length) ips = ['192.168.31.178', '127.0.0.1'];
   for (const ip of ips) {
     console.log(`  Listen: ${scheme}://${ip}:${cfg.port}/`);
-    console.log(`  DJ booth: ${scheme}://${ip}:${cfg.port}/dj   (PIN is in config.json)`);
+    console.log(`  DJ booth: ${scheme}://${ip}:${cfg.port}/dj   (PIN: ${cfg.djPin})`);
   }
   if (!secure)
     console.log('\n  NOTE: no HTTPS certificate found, so browsers will block the microphone.\n  Run ./gen-cert.sh once, then restart.');
