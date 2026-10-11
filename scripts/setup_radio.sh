@@ -22,6 +22,15 @@ npm install --omit=dev
 
 mkdir -p "$RADIO_DIR/music" "$RADIO_DIR/jingles" "$RADIO_DIR/certs"
 
+termux-setup-storage 2>/dev/null || true
+if [ -d "$HOME/storage/shared/Music" ]; then
+    echo "  [✔] Linking existing songs from ~/storage/shared/Music..."
+    find "$HOME/storage/shared/Music" -type f -iname "*.mp3" -exec ln -sf {} "$RADIO_DIR/music/" \; 2>/dev/null || true
+elif [ -d "/sdcard/Music" ]; then
+    echo "  [✔] Linking existing songs from /sdcard/Music..."
+    find "/sdcard/Music" -type f -iname "*.mp3" -exec ln -sf {} "$RADIO_DIR/music/" \; 2>/dev/null || true
+fi
+
 echo "[3/4] Ensuring HTTPS certificate for local network..."
 if [ ! -f "$RADIO_DIR/certs/cert.pem" ]; then
     IP=$(ip -4 addr show wlan0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -1 || echo "192.168.31.178")

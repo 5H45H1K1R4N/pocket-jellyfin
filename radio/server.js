@@ -110,6 +110,34 @@ function listMp3(dir, depth = 0) {
   return out;
 }
 
+function getAllMusic() {
+  const dirs = [MUSIC_DIR];
+  const candidates = [
+    path.join(os.homedir(), 'storage', 'shared', 'Music'),
+    path.join(os.homedir(), 'Music'),
+    '/sdcard/Music',
+    '/storage/emulated/0/Music',
+    path.join(ROOT, '..', 'hub', 'uploads')
+  ];
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c) && !dirs.includes(c)) dirs.push(c);
+    } catch (e) {}
+  }
+  let files = [];
+  const seen = new Set();
+  for (const d of dirs) {
+    for (const f of listMp3(d)) {
+      const bn = path.basename(f).toLowerCase();
+      if (!seen.has(bn)) {
+        seen.add(bn);
+        files.push(f);
+      }
+    }
+  }
+  return files;
+}
+
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -189,7 +217,7 @@ async function playLoop() {
   let last = null;
   for (;;) {
     try {
-      const music = listMp3(MUSIC_DIR); // rescanned every round, so new files appear on their own
+      const music = getAllMusic(); // scans station music/ + phone storage/shared/Music + uploads
       if (!music.length) {
         if (state.now) setNow(null);
         await sleep(3000);
@@ -463,6 +491,6 @@ server.listen(cfg.port, '0.0.0.0', () => {
   }
   if (!secure)
     console.log('\n  NOTE: no HTTPS certificate found, so browsers will block the microphone.\n  Run ./gen-cert.sh once, then restart.');
-  console.log(`  Music folder: ${MUSIC_DIR} (${listMp3(MUSIC_DIR).length} songs)\n`);
+  console.log(`  Music library: ${getAllMusic().length} songs found (station music/ + phone storage + uploads)\n`);
   playLoop();
 });
