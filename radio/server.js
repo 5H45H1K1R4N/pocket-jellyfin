@@ -156,6 +156,8 @@ let recentMs = 0;
 const state = { now: null, history: [], live: null };
 let djSocket = null;
 let skipRequested = false;
+const playQueue = [];
+let isPaused = false;
 
 function pushAudio(buf, ms) {
   for (const res of streamClients) {
@@ -196,6 +198,14 @@ async function playFile(file, kind) {
       skipRequested = false;
       break;
     }
+    while (isPaused && !skipRequested) {
+      await sleep(150);
+      clock = Date.now();
+    }
+    if (skipRequested) {
+      skipRequested = false;
+      break;
+    }
     const start = frames[i].off;
     let end = start;
     let ms = 0;
@@ -217,6 +227,13 @@ async function playLoop() {
   let last = null;
   for (;;) {
     try {
+      if (playQueue.length > 0) {
+        const item = playQueue.shift();
+        await playFile(item.file, item.kind);
+        last = item.file;
+        if (item.kind === 'song') sinceJingle++;
+        continue;
+      }
       const music = getAllMusic(); // scans station music/ + phone storage/shared/Music + uploads
       if (!music.length) {
         if (state.now) setNow(null);
@@ -227,11 +244,13 @@ async function playLoop() {
       const order = shuffle(music.slice());
       if (order.length > 1 && order[0] === last) order.push(order.shift());
       for (const file of order) {
+        if (playQueue.length > 0) break;
         if (cfg.jingleEvery > 0 && sinceJingle >= cfg.jingleEvery) {
           const jingles = listMp3(JINGLE_DIR);
           if (jingles.length) await playFile(jingles[Math.floor(Math.random() * jingles.length)], 'jingle');
           sinceJingle = 0;
         }
+        if (playQueue.length > 0) break;
         await playFile(file, 'song');
         last = file;
         sinceJingle++;
@@ -290,8 +309,23 @@ function handler(req, res) {
         now: state.now,
         live: state.live,
         listeners: countListeners(),
+        paused: isPaused,
       })
     );
+    return;
+  }
+
+  if (p === '/api/playlist') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    const titles = getAllMusic().map(prettyTitle);
+    res.end(JSON.stringify(titles));
+    return;
+  }
+
+  if (p === '/api/jingles') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    const titles = listMp3(JINGLE_DIR).map(prettyTitle);
+    res.end(JSON.stringify(titles));
     return;
   }
 
@@ -401,6 +435,7 @@ wss.on('connection', (ws, req) => {
     history: state.history,
     live: state.live,
     listeners: countListeners(),
+    paused: isPaused,
   });
 
   ws.on('message', (data, isBinary) => {
@@ -448,6 +483,52 @@ wss.on('connection', (ws, req) => {
       }
     } else if (msg.type === 'skip') {
       skipRequested = true;
+    } else if (msg.type === 'prev') {
+      const prevTitle = state.history && state.history[1] ? state.history[1].title : null;
+      if (prevTitle) {
+        const allFiles = getAllMusic();
+        const match = allFiles.find((f) => prettyTitle(f) === prevTitle);
+        if (match) {
+          playQueue.unshift({ file: match, kind: 'song' });
+          skipRequested = true;
+          isPaused = false;
+          broadcast({ type: 'pauseState', paused: false });
+        }
+      } else if (state.now) {
+        const allFiles = getAllMusic();
+        const match = allFiles.find((f) => prettyTitle(f) === state.now.title);
+        if (match) {
+          playQueue.unshift({ file: match, kind: 'song' });
+          skipRequested = true;
+          isPaused = false;
+          broadcast({ type: 'pauseState', paused: false });
+        }
+      }
+    } else if (msg.type === 'play') {
+      if (msg.title) {
+        const allFiles = getAllMusic();
+        const match = allFiles.find((f) => prettyTitle(f) === msg.title);
+        if (match) {
+          playQueue.unshift({ file: match, kind: 'song' });
+          skipRequested = true;
+          isPaused = false;
+          broadcast({ type: 'pauseState', paused: false });
+        }
+      }
+    } else if (msg.type === 'jingle') {
+      if (msg.title) {
+        const jingles = listMp3(JINGLE_DIR);
+        const match = jingles.find((f) => prettyTitle(f) === msg.title);
+        if (match) {
+          playQueue.unshift({ file: match, kind: 'jingle' });
+          skipRequested = true;
+          isPaused = false;
+          broadcast({ type: 'pauseState', paused: false });
+        }
+      }
+    } else if (msg.type === 'pause') {
+      isPaused = !isPaused;
+      broadcast({ type: 'pauseState', paused: isPaused });
     }
   });
 

@@ -4,76 +4,700 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d1017">
-<title>DJ Booth</title>
+<title>DJ Booth — Peppy Radio</title>
 <style>
-  :root{--bg:#0d1017;--panel:#161b26;--line:#252c3b;--ink:#eef0f5;--mute:#8b93a7;--amber:#ffb347;--red:#ff4d5e;--green:#4ade80}
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;display:flex;justify-content:center;color:var(--ink);
-    background:radial-gradient(1000px 520px at 50% -8%,#222b3f,var(--bg));
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  main{width:100%;max-width:520px;padding:28px 18px 48px}
-  h1{font-size:20px;margin:0 0 20px;letter-spacing:.04em;font-weight:650}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px}
-  label{display:block;font-size:12px;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 6px}
-  label:first-child{margin-top:0}
-  input[type=text],input[type=password]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
-    background:#0f131c;color:var(--ink);font:inherit;font-size:17px}
-  input[type=range]{width:100%;accent-color:var(--amber)}
-  button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:15px;font-weight:700;font-size:16px}
-  button:active{transform:scale(.98)}
-  .primary{width:100%;margin-top:18px;background:var(--amber);color:#1a1204}
-  #live{width:100%;background:var(--red);color:#fff;font-size:19px;padding:18px}
-  body.onair #live{background:#2a3144;color:var(--ink)}
-  .two{display:flex;gap:10px;margin-top:12px}
-  .two button{flex:1;background:#232a3b;color:var(--ink)}
-  .two button.on{background:var(--amber);color:#1a1204}
-  .meter{height:12px;border-radius:7px;background:#0f131c;overflow:hidden;margin-top:6px}
-  .meter div{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--amber) 70%,var(--red));transition:width .06s}
-  #msg{font-size:14px;margin-top:12px;min-height:20px;color:var(--mute)}
-  #msg.err{color:var(--red)}
-  .meta{font-size:13px;color:var(--mute);margin-top:14px;word-break:break-word}
-  .meta b{color:var(--ink);font-weight:600}
-  .hide{display:none!important}
-  .warn{font-size:13px;color:var(--amber);line-height:1.5}
+  :root {
+    --bg: #0d1017;
+    --panel: #161b26;
+    --panel-hover: #1c2230;
+    --line: #252c3b;
+    --ink: #eef0f5;
+    --mute: #8b93a7;
+    --amber: #ffb347;
+    --red: #ff4d5e;
+    --green: #4ade80;
+    --blue: #38bdf8;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    background: radial-gradient(1200px 600px at 50% -10%, #1f2738, var(--bg));
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.4;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(13, 16, 23, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand h1 {
+    font-size: 19px;
+    margin: 0;
+    letter-spacing: .02em;
+    font-weight: 700;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #232a3b;
+    color: var(--mute);
+    border: 1px solid var(--line);
+    transition: all .2s;
+  }
+  .status-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--mute);
+  }
+  body.onair .status-badge {
+    background: rgba(255, 77, 94, 0.15);
+    color: var(--red);
+    border-color: rgba(255, 77, 94, 0.4);
+  }
+  body.onair .status-badge .dot {
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: pulse 1.2s infinite alternate;
+  }
+  @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .nav-link {
+    color: var(--mute);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    transition: color .15s, background .15s;
+  }
+  .nav-link:hover { color: var(--ink); background: #1c2230; }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    width: 100%;
+  }
+
+  /* Login Card */
+  #login-wrap {
+    max-width: 440px;
+    margin: 40px auto 0;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--mute);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Two Column Grid */
+  .booth-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 900px) {
+    .booth-grid {
+      grid-template-columns: 460px 1fr;
+      align-items: start;
+    }
+  }
+
+  /* Form Elements */
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--mute);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin: 14px 0 6px;
+    font-weight: 600;
+  }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=password], select {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #0f131c;
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type=text]:focus, input[type=password]:focus, select:focus {
+    border-color: var(--amber);
+  }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--amber);
+    cursor: pointer;
+    margin: 8px 0;
+  }
+
+  /* Buttons */
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-height: 44px;
+    font-weight: 700;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    user-select: none;
+    transition: background .15s, transform .05s, opacity .15s;
+  }
+  button:active { transform: scale(.98); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary {
+    width: 100%;
+    background: var(--amber);
+    color: #1a1204;
+    font-size: 16px;
+  }
+  .btn-primary:hover { background: #ffbe5e; }
+  .btn-ghost {
+    background: #232a3b;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-ghost:hover { background: #2a3347; }
+  .btn-ghost.active {
+    background: var(--amber);
+    color: #1a1204;
+    border-color: var(--amber);
+  }
+
+  /* On-Air Control Button */
+  #live {
+    width: 100%;
+    min-height: 54px;
+    background: var(--red);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .03em;
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(255, 77, 94, 0.35);
+  }
+  body.onair #live {
+    background: #232a3b;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    box-shadow: none;
+  }
+  body.onair #live:hover { background: #2a3347; }
+
+  /* Meters and Quality */
+  .meter {
+    height: 12px;
+    border-radius: 7px;
+    background: #0f131c;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .meter div {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--green), var(--amber) 70%, var(--red));
+    transition: width .06s ease;
+  }
+
+  .quality-bar-wrap {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .quality-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #0f131c;
+    border: 1px solid var(--line);
+  }
+  .quality-indicator .badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* Now Playing Card */
+  .np-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #0f131c;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .np-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .np-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    color: var(--amber);
+    background: rgba(255, 179, 71, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .np-title {
+    font-size: 18px;
+    font-weight: 750;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+  .np-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--mute);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Animated EQ Bars */
+  .eq-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 18px;
+    width: 24px;
+  }
+  .eq-bar {
+    width: 4px;
+    background: var(--green);
+    border-radius: 2px;
+    height: 4px;
+    animation: eq 0.8s ease-in-out infinite alternate;
+  }
+  .eq-bar:nth-child(1) { animation-delay: 0.1s; height: 12px; }
+  .eq-bar:nth-child(2) { animation-delay: 0.4s; height: 16px; }
+  .eq-bar:nth-child(3) { animation-delay: 0.2s; height: 8px; }
+  .eq-bar:nth-child(4) { animation-delay: 0.5s; height: 14px; }
+  .paused .eq-bar { animation-play-state: paused; opacity: 0.35; }
+  @keyframes eq {
+    0% { height: 3px; }
+    50% { height: 16px; }
+    100% { height: 6px; }
+  }
+
+  /* Transport Player Controls */
+  .deck-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .deck-controls button {
+    flex: 1;
+    font-size: 15px;
+  }
+  .btn-accent {
+    background: var(--panel-hover);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-accent:hover { background: #232a3b; }
+  .btn-play-state.paused {
+    background: var(--amber);
+    color: #1a1204;
+  }
+
+  /* Jingles control */
+  .jingles-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .jingles-row select {
+    flex: 1;
+  }
+  .jingles-row button {
+    flex-shrink: 0;
+  }
+
+  /* Stats / Listener block */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .stat-box {
+    background: #0f131c;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+  }
+  .stat-val.live-val { color: var(--red); }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--mute);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 4px;
+  }
+
+  /* Library Panel */
+  .search-bar-wrap {
+    position: relative;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+  }
+  .search-input {
+    padding-left: 38px !important;
+    padding-right: 38px !important;
+  }
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--mute);
+    pointer-events: none;
+    font-size: 15px;
+  }
+  .clear-btn {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: 0;
+    color: var(--mute);
+    font-size: 16px;
+    min-height: 32px;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .clear-btn:hover { color: var(--ink); background: rgba(255,255,255,0.06); }
+
+  .lib-scroll {
+    max-height: 620px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #0f131c;
+  }
+  .lib-scroll::-webkit-scrollbar { width: 6px; }
+  .lib-scroll::-webkit-scrollbar-track { background: transparent; }
+  .lib-scroll::-webkit-scrollbar-thumb { background: #232a3b; border-radius: 3px; }
+
+  .song-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(37, 44, 59, 0.6);
+    gap: 12px;
+    transition: background .1s;
+  }
+  .song-row:last-child { border-bottom: 0; }
+  .song-row:hover { background: #161c28; }
+  .song-row.active-song {
+    background: rgba(255, 179, 71, 0.08);
+    border-left: 3px solid var(--amber);
+  }
+  .song-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .song-title-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .song-meta-text {
+    font-size: 12px;
+    color: var(--mute);
+    margin-top: 2px;
+  }
+  .btn-play-song {
+    flex-shrink: 0;
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: #232a3b;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-play-song:hover {
+    background: var(--amber);
+    color: #1a1204;
+    border-color: var(--amber);
+  }
+  .active-song .btn-play-song {
+    background: rgba(255, 179, 71, 0.2);
+    color: var(--amber);
+    border-color: rgba(255, 179, 71, 0.5);
+  }
+
+  .meta-tip {
+    font-size: 12px;
+    color: var(--mute);
+    line-height: 1.5;
+    margin-top: 14px;
+  }
+  .meta-tip b { color: var(--ink); }
+  .warn {
+    font-size: 13px;
+    color: var(--amber);
+    line-height: 1.4;
+    padding: 10px 14px;
+    background: rgba(255, 179, 71, 0.1);
+    border: 1px solid rgba(255, 179, 71, 0.25);
+    border-radius: 10px;
+    margin-top: 12px;
+  }
+  #msg {
+    font-size: 13px;
+    min-height: 20px;
+    margin-top: 10px;
+    color: var(--mute);
+  }
+  #msg.err { color: var(--red); }
+  #msg.ok { color: var(--green); }
+  .hide { display: none !important; }
 </style>
 </head>
 <body>
+
+<header>
+  <div class="brand">
+    <span class="status-badge" id="airBadge">
+      <span class="dot"></span>
+      <span id="airBadgeText">Off Air</span>
+    </span>
+    <h1>Peppy DJ Booth</h1>
+  </div>
+  <div class="header-actions">
+    <a href="/" target="_blank" class="nav-link" title="Open listener stream in new tab">
+      📻 Listener Radio
+    </a>
+  </div>
+</header>
+
 <main>
-  <h1>DJ Booth</h1>
+  <!-- Login section -->
+  <div id="login-wrap">
+    <section class="card" id="login">
+      <div class="card-title">Authentication</div>
+      <label for="pin">DJ PIN</label>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter DJ PIN">
+      <button class="btn-primary" id="enter" style="margin-top:16px">Enter Booth</button>
+      <div id="loginMsg" style="font-size:13px;color:var(--red);margin-top:12px;"></div>
+    </section>
+  </div>
 
-  <section class="card" id="login">
-    <label for="pin">DJ PIN</label>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="from config.json">
-    <button class="primary" id="enter">Enter booth</button>
-    <div id="loginMsg" class="meta"></div>
-  </section>
-
+  <!-- Authenticated DJ Booth -->
   <div id="booth" class="hide">
-    <section class="card">
-      <label for="name">On-air name</label>
-      <input id="name" type="text" maxlength="40" value="Home DJ">
-      <div style="height:18px"></div>
-      <button id="live">Go on air</button>
+    <div class="booth-grid">
+      <!-- LEFT COLUMN: On-Air Broadcast Studio & Controls -->
+      <div class="left-col">
+        <!-- Live Voice Studio Card -->
+        <section class="card">
+          <div class="card-title">
+            <span>🎙️ Broadcast Studio</span>
+            <span id="onAirTimerPill" class="hide" style="font-size:12px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums">00:00:00</span>
+          </div>
 
-      <label>Mic level</label>
-      <div class="meter"><div id="level"></div></div>
+          <label for="name">On-air DJ Name</label>
+          <input id="name" type="text" maxlength="40" value="Home DJ">
 
-      <label for="gain">Mic boost</label>
-      <input id="gain" type="range" min="0.5" max="4" step="0.1" value="1.5">
+          <div style="height:14px"></div>
+          <button id="live">Go on air</button>
 
-      <div class="two">
-        <button id="mute" disabled>Mute mic</button>
-        <button id="skip">Skip song</button>
+          <label>Mic Level</label>
+          <div class="meter"><div id="level"></div></div>
+
+          <label for="gain">Mic Boost &amp; Quality</label>
+          <input id="gain" type="range" min="0.5" max="4" step="0.1" value="1.5">
+          <div class="quality-bar-wrap">
+            <span style="color:var(--mute)">Gain: <b id="gainVal" style="color:var(--ink)">1.5x</b></span>
+            <span class="quality-indicator" id="qualityBadge">
+              <span class="badge-dot" id="qualityDot" style="background:var(--green)"></span>
+              <span id="qualityText" style="color:var(--green)">Optimal</span>
+            </span>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <button id="mute" class="btn-ghost" style="flex:1" disabled>Mute Mic</button>
+          </div>
+
+          <div id="msg"></div>
+          <div id="secure"></div>
+        </section>
+
+        <!-- Now Playing & Deck Player Card -->
+        <section class="card">
+          <div class="card-title">
+            <span>📻 Now Playing &amp; Deck Controls</span>
+            <div class="eq-container" id="eqBars">
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+              <div class="eq-bar"></div>
+            </div>
+          </div>
+
+          <div class="np-hero">
+            <div class="np-header">
+              <span class="np-tag" id="npKind">Song</span>
+              <span style="font-size:12px;color:var(--mute)" id="deckState">Streaming Live</span>
+            </div>
+            <div class="np-title" id="npTitle">Connecting…</div>
+            <div class="np-time-row">
+              <span>Elapsed: <b id="npElapsed" style="color:var(--ink)">00:00</b></span>
+              <span id="npSince">–</span>
+            </div>
+          </div>
+
+          <!-- Transport controls -->
+          <div class="deck-controls">
+            <button id="btnPrev" class="btn-accent" title="Play Previous Song">
+              ⏮ Previous
+            </button>
+            <button id="btnPause" class="btn-accent btn-play-state" title="Pause / Resume Stream">
+              ⏸ Pause
+            </button>
+            <button id="btnSkip" class="btn-accent" title="Skip to Next Song">
+              ⏭ Next
+            </button>
+          </div>
+
+          <!-- Jingles Dropdown & Trigger -->
+          <div style="margin-top:16px">
+            <label for="jingleSelect" style="margin-bottom:6px">Station Jingle / Drop</label>
+            <div class="jingles-row">
+              <select id="jingleSelect">
+                <option value="">(Loading jingles…)</option>
+              </select>
+              <button id="btnDropJingle" class="btn-ghost" title="Fire Selected Jingle">
+                ▶ Play Jingle
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Listeners & Stats Card -->
+        <section class="card">
+          <div class="card-title">👥 Station Statistics</div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-val" id="lc">0</div>
+              <div class="stat-label">Listeners Online</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val live-val" id="airTimeStat">00:00</div>
+              <div class="stat-label">On-Air Duration</div>
+            </div>
+          </div>
+          <div class="meta-tip">
+            🎧 <b>DJ Monitoring Tip:</b> Don't tune in with open speakers on this same device while on air to prevent feedback echo. Monitor using headphones!
+          </div>
+        </section>
       </div>
-      <div id="msg"></div>
-      <div class="meta" id="secure"></div>
-    </section>
 
-    <section class="card">
-      <div class="meta" style="margin-top:0">Now playing: <b id="np">–</b></div>
-      <div class="meta"><b id="lc">0</b> listening</div>
-      <div class="meta">Tip: don't tune in on this same device while on air, or you'll get an echo. Use headphones if you want to monitor.</div>
-    </section>
+      <!-- RIGHT COLUMN: Music Library Browser -->
+      <div class="right-col">
+        <section class="card" style="margin-bottom:0">
+          <div class="card-title">
+            <span>🎵 Music Library</span>
+            <span id="libCount" style="font-size:12px;color:var(--mute);font-weight:600">0 tracks</span>
+          </div>
+
+          <!-- Search filter box -->
+          <div class="search-bar-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="libSearch" class="search-input" placeholder="Search songs in library…">
+            <button id="clearSearch" class="clear-btn hide" title="Clear search">✕</button>
+          </div>
+
+          <!-- Scrollable playlist container -->
+          <div class="lib-scroll" id="playlistContainer">
+            <div style="padding:24px;text-align:center;color:var(--mute);font-size:14px">
+              Loading station library…
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -82,48 +706,291 @@ const $ = (id) => document.getElementById(id);
 const TARGET_RATE = 16000;
 let ws, authed = false, onAir = false, sending = false, muted = false;
 let stream, actx, proc, gainNode, peak = 0;
+let currentNow = null;
+let currentPaused = false;
+let allTracks = [];
+let onAirStartTimestamp = null;
+let onAirTimerInterval = null;
+let songElapsedInterval = null;
 
-function msg(t, err) { const m = $('msg'); m.textContent = t || ''; m.className = err ? 'err' : ''; }
+function msg(t, err, ok) {
+  const m = $('msg');
+  m.textContent = t || '';
+  m.className = err ? 'err' : (ok ? 'ok' : '');
+}
 
+function formatDuration(sec) {
+  if (isNaN(sec) || sec < 0) return '00:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatHMS(ms) {
+  if (isNaN(ms) || ms < 0) return '00:00:00';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+/* Quality indicator based on gain */
+function updateQualityIndicator(gain) {
+  $('gainVal').textContent = gain.toFixed(1) + 'x';
+  const dot = $('qualityDot');
+  const txt = $('qualityText');
+  if (gain <= 2.0) {
+    dot.style.background = 'var(--green)';
+    txt.style.color = 'var(--green)';
+    txt.textContent = 'Optimal';
+  } else if (gain <= 3.2) {
+    dot.style.background = 'var(--amber)';
+    txt.style.color = 'var(--amber)';
+    txt.textContent = 'Boosted';
+  } else {
+    dot.style.background = 'var(--red)';
+    txt.style.color = 'var(--red)';
+    txt.textContent = 'High / Peak Risk';
+  }
+}
+
+/* Fetch playlists and jingles */
+async function loadLibrary() {
+  try {
+    const res = await fetch('/api/playlist');
+    if (res.ok) {
+      allTracks = await res.json();
+      renderLibrary();
+    }
+  } catch (e) {
+    console.error('Failed to load playlist:', e);
+  }
+}
+
+async function loadJingles() {
+  try {
+    const res = await fetch('/api/jingles');
+    if (res.ok) {
+      const list = await res.json();
+      const sel = $('jingleSelect');
+      sel.innerHTML = '';
+      if (!list.length) {
+        sel.innerHTML = '<option value="">(No jingles found in ./jingles)</option>';
+        $('btnDropJingle').disabled = true;
+        return;
+      }
+      $('btnDropJingle').disabled = false;
+      for (const j of list) {
+        const opt = document.createElement('option');
+        opt.value = j;
+        opt.textContent = j;
+        sel.appendChild(opt);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load jingles:', e);
+  }
+}
+
+/* Render songs list with search filtering */
+function renderLibrary() {
+  const container = $('playlistContainer');
+  const query = ($('libSearch').value || '').trim().toLowerCase();
+  $('clearSearch').classList.toggle('hide', !query);
+
+  const filtered = query
+    ? allTracks.filter((t) => t.toLowerCase().includes(query))
+    : allTracks;
+
+  $('libCount').textContent = `${filtered.length} of ${allTracks.length} tracks`;
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div style="padding:32px 16px;text-align:center;color:var(--mute);font-size:14px">
+        ${allTracks.length ? 'No tracks match your search.' : 'No music found in library.'}
+      </div>`;
+    return;
+  }
+
+  const currentTitle = currentNow && currentNow.title ? currentNow.title : '';
+  container.innerHTML = '';
+
+  for (const title of filtered) {
+    const isPlaying = currentTitle && currentTitle.toLowerCase() === title.toLowerCase();
+    const row = document.createElement('div');
+    row.className = 'song-row' + (isPlaying ? ' active-song' : '');
+
+    const info = document.createElement('div');
+    info.className = 'song-info';
+
+    const t = document.createElement('div');
+    t.className = 'song-title-text';
+    t.textContent = title;
+    info.appendChild(t);
+
+    const meta = document.createElement('div');
+    meta.className = 'song-meta-text';
+    meta.textContent = isPlaying ? '● Now Playing On Air' : 'MP3 Audio';
+    info.appendChild(meta);
+
+    const playBtn = document.createElement('button');
+    playBtn.className = 'btn-play-song';
+    playBtn.innerHTML = isPlaying ? '▶ Playing' : '▶ Play This';
+    playBtn.onclick = () => {
+      if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'play', title }));
+        msg(`Queued track: "${title}"`, false, true);
+      }
+    };
+
+    row.appendChild(info);
+    row.appendChild(playBtn);
+    container.appendChild(row);
+  }
+}
+
+/* Update Now Playing Card UI */
+function updateNowPlaying(now) {
+  currentNow = now;
+  if (!now) {
+    $('npTitle').textContent = 'Station Idle';
+    $('npKind').textContent = 'Off Air';
+    $('npElapsed').textContent = '00:00';
+    $('npSince').textContent = '–';
+    $('eqBars').classList.add('paused');
+    renderLibrary();
+    return;
+  }
+
+  $('npTitle').textContent = now.title || 'Unknown Title';
+  $('npKind').textContent = (now.kind || 'song').toUpperCase();
+
+  const isPaused = currentPaused;
+  $('eqBars').classList.toggle('paused', isPaused);
+  $('deckState').textContent = isPaused ? 'Stream Paused' : (now.kind === 'jingle' ? 'Playing Jingle' : 'Streaming Live');
+
+  renderLibrary();
+}
+
+/* Tick elapsed time */
+function tickElapsed() {
+  if (!currentNow || !currentNow.startedAt) {
+    $('npElapsed').textContent = '00:00';
+    return;
+  }
+  const diffSec = Math.max(0, Math.floor((Date.now() - currentNow.startedAt) / 1000));
+  $('npElapsed').textContent = formatDuration(diffSec);
+}
+
+/* On-air timer tick */
+function tickOnAirTimer() {
+  if (!onAirStartTimestamp) return;
+  const elapsedMs = Date.now() - onAirStartTimestamp;
+  const hms = formatHMS(elapsedMs);
+  $('onAirTimerPill').textContent = hms;
+  $('airTimeStat').textContent = formatDuration(Math.floor(elapsedMs / 1000));
+}
+
+/* WebSocket Connection */
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   ws = new WebSocket(proto + '://' + location.host + '/ws');
-  ws.onopen = () => { const p = sessionStorage.getItem('pin'); if (p) ws.send(JSON.stringify({ type: 'auth', pin: p })); };
-  ws.onclose = () => { authed = false; if (onAir) stopLive(true); setTimeout(connect, 2000); };
+
+  ws.onopen = () => {
+    const p = sessionStorage.getItem('pin');
+    if (p) ws.send(JSON.stringify({ type: 'auth', pin: p }));
+  };
+
+  ws.onclose = () => {
+    authed = false;
+    if (onAir) stopLive(true);
+    setTimeout(connect, 2000);
+  };
+
   ws.onmessage = (e) => {
     const m = JSON.parse(e.data);
     if (m.type === 'auth') {
-      if (m.ok) { authed = true; $('login').classList.add('hide'); $('booth').classList.remove('hide'); }
-      else { sessionStorage.removeItem('pin'); $('loginMsg').textContent = m.error; }
+      if (m.ok) {
+        authed = true;
+        $('login-wrap').classList.add('hide');
+        $('booth').classList.remove('hide');
+        loadLibrary();
+        loadJingles();
+      } else {
+        sessionStorage.removeItem('pin');
+        $('loginMsg').textContent = m.error || 'Authentication failed';
+      }
     } else if (m.type === 'liveAck') {
-      if (m.ok) { sending = true; document.body.classList.add('onair'); $('live').textContent = 'Stop broadcast'; msg('You are on air.'); }
-      else { msg(m.error, true); stopLive(true); }
-    } else if (m.type === 'hello' || m.type === 'now') {
-      $('np').textContent = m.now ? m.now.title : '–';
-      if (m.type === 'hello') $('lc').textContent = m.listeners;
-    } else if (m.type === 'stats') $('lc').textContent = m.listeners;
+      if (m.ok) {
+        sending = true;
+        document.body.classList.add('onair');
+        $('airBadgeText').textContent = 'ON AIR';
+        $('live').textContent = 'Stop broadcast';
+        onAirStartTimestamp = Date.now();
+        $('onAirTimerPill').classList.remove('hide');
+        clearInterval(onAirTimerInterval);
+        onAirTimerInterval = setInterval(tickOnAirTimer, 1000);
+        msg('You are live on air.', false, true);
+      } else {
+        msg(m.error, true);
+        stopLive(true);
+      }
+    } else if (m.type === 'hello') {
+      $('lc').textContent = m.listeners ?? 0;
+      if (typeof m.paused === 'boolean') {
+        currentPaused = m.paused;
+        updatePauseButton(currentPaused);
+      }
+      updateNowPlaying(m.now);
+    } else if (m.type === 'now') {
+      updateNowPlaying(m.now);
+    } else if (m.type === 'stats') {
+      $('lc').textContent = m.listeners ?? 0;
+    } else if (m.type === 'pauseState') {
+      currentPaused = !!m.paused;
+      updatePauseButton(currentPaused);
+      if (currentNow) updateNowPlaying(currentNow);
+    }
   };
 }
 
+function updatePauseButton(paused) {
+  const btn = $('btnPause');
+  if (paused) {
+    btn.innerHTML = '▶ Resume';
+    btn.classList.add('paused');
+  } else {
+    btn.innerHTML = '⏸ Pause';
+    btn.classList.remove('paused');
+  }
+}
+
+/* Login handler */
 $('enter').onclick = () => {
   const pin = $('pin').value.trim();
   if (!pin) return;
   sessionStorage.setItem('pin', pin);
   ws.send(JSON.stringify({ type: 'auth', pin }));
 };
-$('pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('enter').click(); });
+$('pin').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') $('enter').click();
+});
 
+/* Downsample audio to 16kHz Int16 */
 function downsample(buf, inRate, outRate) {
   if (inRate === outRate) return buf;
   const ratio = inRate / outRate, n = Math.floor(buf.length / ratio), out = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const a = Math.floor(i * ratio), b = Math.min(Math.floor((i + 1) * ratio), buf.length);
-    let s = 0; for (let j = a; j < b; j++) s += buf[j];
+    let s = 0;
+    for (let j = a; j < b; j++) s += buf[j];
     out[i] = s / Math.max(1, b - a);
   }
   return out;
 }
 
+/* Mic capture */
 async function startLive() {
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     msg('The browser blocks the mic on plain http. Open the https:// address (run ./gen-cert.sh on the server first).', true);
@@ -133,26 +1000,42 @@ async function startLive() {
     stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
     });
-  } catch (e) { msg('Mic permission was denied.', true); return; }
+  } catch (e) {
+    msg('Mic permission was denied.', true);
+    return;
+  }
 
-  try { actx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_RATE }); }
-  catch (e) { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_RATE });
+  } catch (e) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+  }
   await actx.resume();
 
   const src = actx.createMediaStreamSource(stream);
-  gainNode = actx.createGain(); gainNode.gain.value = Number($('gain').value);
+  gainNode = actx.createGain();
+  gainNode.gain.value = Number($('gain').value);
   proc = actx.createScriptProcessor(4096, 1, 1);
   proc.onaudioprocess = (e) => {
     const inp = e.inputBuffer.getChannelData(0);
-    let p = 0; for (let i = 0; i < inp.length; i++) { const a = Math.abs(inp[i]); if (a > p) p = a; }
+    let p = 0;
+    for (let i = 0; i < inp.length; i++) {
+      const a = Math.abs(inp[i]);
+      if (a > p) p = a;
+    }
     peak = Math.max(p, peak * 0.85);
     if (!sending || muted || !ws || ws.readyState !== 1) return;
     const d = downsample(inp, actx.sampleRate, TARGET_RATE);
     const out = new Int16Array(d.length);
-    for (let i = 0; i < d.length; i++) { const v = Math.max(-1, Math.min(1, d[i])); out[i] = v < 0 ? v * 32768 : v * 32767; }
+    for (let i = 0; i < d.length; i++) {
+      const v = Math.max(-1, Math.min(1, d[i]));
+      out[i] = v < 0 ? v * 32768 : v * 32767;
+    }
     ws.send(out.buffer);
   };
-  src.connect(gainNode); gainNode.connect(proc); proc.connect(actx.destination);
+  src.connect(gainNode);
+  gainNode.connect(proc);
+  proc.connect(actx.destination);
 
   onAir = true;
   msg('Going on air…');
@@ -162,34 +1045,103 @@ async function startLive() {
 }
 
 function stopLive(silent) {
-  onAir = false; sending = false; muted = false;
+  onAir = false;
+  sending = false;
+  muted = false;
   if (ws && ws.readyState === 1 && !silent) ws.send(JSON.stringify({ type: 'live', on: false }));
   if (proc) { proc.disconnect(); proc.onaudioprocess = null; proc = null; }
   if (actx) { actx.close(); actx = null; }
   if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
   document.body.classList.remove('onair');
+  $('airBadgeText').textContent = 'Off Air';
   $('live').textContent = 'Go on air';
-  $('mute').disabled = true; $('mute').textContent = 'Mute mic'; $('mute').classList.remove('on');
+  $('mute').disabled = true;
+  $('mute').textContent = 'Mute Mic';
+  $('mute').classList.remove('active');
   $('name').disabled = false;
+  $('onAirTimerPill').classList.add('hide');
+  clearInterval(onAirTimerInterval);
+  onAirStartTimestamp = null;
+  $('airTimeStat').textContent = '00:00';
   if (!silent) msg('Broadcast stopped.');
 }
 
+/* Event bindings */
 $('live').onclick = () => (onAir ? stopLive() : startLive());
+
 $('mute').onclick = () => {
   muted = !muted;
-  $('mute').textContent = muted ? 'Unmute mic' : 'Mute mic';
-  $('mute').classList.toggle('on', muted);
+  $('mute').textContent = muted ? 'Unmute Mic' : 'Mute Mic';
+  $('mute').classList.toggle('active', muted);
 };
-$('skip').onclick = () => ws && ws.readyState === 1 && ws.send(JSON.stringify({ type: 'skip' }));
-$('gain').oninput = (e) => { if (gainNode) gainNode.gain.value = Number(e.target.value); };
 
-(function meter() { $('level').style.width = Math.min(100, peak * 110) + '%'; requestAnimationFrame(meter); })();
+$('gain').oninput = (e) => {
+  const val = Number(e.target.value);
+  if (gainNode) gainNode.gain.value = val;
+  updateQualityIndicator(val);
+};
+
+/* DJ Deck Controls */
+$('btnPrev').onclick = () => {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'prev' }));
+    msg('Requested previous song', false, true);
+  }
+};
+
+$('btnPause').onclick = () => {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'pause' }));
+  }
+};
+
+$('btnSkip').onclick = () => {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'skip' }));
+    msg('Skipping song…', false, true);
+  }
+};
+
+$('btnDropJingle').onclick = () => {
+  const sel = $('jingleSelect');
+  const title = sel.value;
+  if (!title) return;
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'jingle', title }));
+    msg(`Firing jingle: "${title}"`, false, true);
+  }
+};
+
+/* Search filter events */
+$('libSearch').oninput = () => renderLibrary();
+$('clearSearch').onclick = () => {
+  $('libSearch').value = '';
+  renderLibrary();
+  $('libSearch').focus();
+};
+
+/* Mic meter animation */
+(function meter() {
+  $('level').style.width = Math.min(100, peak * 110) + '%';
+  requestAnimationFrame(meter);
+})();
+
+/* Elapsed song timer */
+songElapsedInterval = setInterval(tickElapsed, 1000);
 
 if (!window.isSecureContext) {
-  const s = $('secure'); s.className = 'warn';
-  s.textContent = 'Heads up: this page is on plain http, so the browser will not allow the microphone. Use the https:// address.';
+  const s = $('secure');
+  s.className = 'warn';
+  s.textContent = '⚠️ Plain HTTP detected: browsers block microphone access without HTTPS. Open the https:// address (run ./gen-cert.sh on the server first).';
 }
-window.addEventListener('beforeunload', () => { if (onAir && ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'live', on: false })); });
+
+window.addEventListener('beforeunload', () => {
+  if (onAir && ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'live', on: false }));
+  }
+});
+
+updateQualityIndicator(Number($('gain').value));
 connect();
 </script>
 </body>

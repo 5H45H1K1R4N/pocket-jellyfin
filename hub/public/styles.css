@@ -1,11 +1,14 @@
 :root {
-  --bg-tertiary: #1e1f22; /* Guild rail */
-  --bg-secondary: #2b2d31; /* Sidebar & Members list */
-  --bg-primary: #313338; /* Main chat */
-  --bg-modifier-hover: rgba(255, 255, 255, 0.02);
-  --bg-modifier-active: rgba(255, 255, 255, 0.06);
-  --bg-modifier-selected: rgba(255, 255, 255, 0.08);
-  
+  /* Discord Theme Palette */
+  --bg-tertiary: #1e1f22;       /* Guild rail */
+  --bg-secondary: #2b2d31;      /* Sidebar & Members list */
+  --bg-primary: #313338;        /* Main chat area */
+  --bg-floating: #111214;       /* Modals and popovers */
+  --bg-modifier-hover: rgba(255, 255, 255, 0.04);
+  --bg-modifier-active: rgba(255, 255, 255, 0.08);
+  --bg-modifier-selected: rgba(255, 255, 255, 0.1);
+
+  /* Typography Colors */
   --text-normal: #dbdee1;
   --text-muted: #949ba4;
   --text-channel: #949ba4;
@@ -14,38 +17,67 @@
   --interactive-normal: #b5bac1;
   --interactive-hover: #dbdee1;
   --interactive-active: #ffffff;
-  
+
+  /* Accent Colors */
   --brand-color: #5865F2;
+  --brand-color-hover: #4752c4;
   --status-online: #23a55a;
-  
-  --font-primary: 'Inter', sans-serif;
+  --status-dnd: #f23f43;
+  --status-idle: #f0b232;
+  --status-offline: #80848e;
+
+  /* Typography & Layout Dimensions */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --guild-rail-width: 72px;
+  --sidebar-width: 240px;
+  --members-width: 240px;
+  --topbar-height: 48px;
+  --user-panel-height: 52px;
+  --drawer-transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), left 0.3s cubic-bezier(0.16, 1, 0.3, 1), right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   font-family: var(--font-primary);
   background-color: var(--bg-primary);
   color: var(--text-normal);
-  height: 100vh;
-  overflow: hidden;
   font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base Layout */
+/* Base App Layout */
 .app-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
+  max-width: 100vw;
+  overflow: hidden;
+  position: relative;
 }
 
-/* 1. Guild Rail */
+/* ==========================================================================
+   1. Guild Rail (Leftmost Discord Server List)
+   ========================================================================== */
 .guild-rail {
-  width: 72px;
+  width: var(--guild-rail-width);
   background-color: var(--bg-tertiary);
   display: flex;
   flex-direction: column;
@@ -53,6 +85,15 @@ body {
   padding: 12px 0;
   gap: 8px;
   flex-shrink: 0;
+  z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+.guild-rail::-webkit-scrollbar {
+  width: 0;
+  display: none;
 }
 
 .guild-icon {
@@ -64,66 +105,107 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-radius 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
   color: var(--text-normal);
+  font-weight: 700;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .guild-icon:hover {
   border-radius: 16px;
   background-color: var(--brand-color);
-  color: white;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .guild-icon.active {
   border-radius: 16px;
   background-color: var(--brand-color);
-  color: white;
+  color: #ffffff;
+}
+
+.guild-icon.add-icon {
+  font-size: 24px;
+  color: var(--status-online);
+}
+
+.guild-icon.add-icon:hover {
+  background-color: var(--status-online);
+  color: #ffffff;
 }
 
 .guild-separator {
   width: 32px;
   height: 2px;
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.08);
   border-radius: 1px;
+  margin: 4px 0;
+  flex-shrink: 0;
 }
 
-/* 2. Channel Sidebar */
+/* ==========================================================================
+   2. Channel Sidebar
+   ========================================================================== */
 .sidebar {
-  width: 240px;
+  width: var(--sidebar-width);
   background-color: var(--bg-secondary);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100%;
+  position: relative;
+  z-index: 90;
 }
 
 .sidebar-header {
-  height: 48px;
+  height: var(--topbar-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
   border-bottom: 1px solid #1f2023;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  transition: background-color 0.1s;
+  user-select: none;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
 }
+
 .sidebar-header:hover {
   background-color: var(--bg-modifier-hover);
 }
-.sidebar-header h2 {
+
+.sidebar-header h2,
+.sidebar-header .server-name {
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+.sidebar-header .server-dropdown {
+  color: var(--interactive-normal);
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 8px;
 }
 
 .sidebar-content {
-  flex: 1;
+  flex: 1 1 0%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 12px 8px;
+  min-height: 0;
 }
+
 .sidebar-content::-webkit-scrollbar {
   width: 4px;
 }
+
 .sidebar-content::-webkit-scrollbar-thumb {
   background: #1a1b1e;
   border-radius: 2px;
@@ -138,11 +220,14 @@ body {
   font-weight: 500;
   cursor: pointer;
   margin-bottom: 2px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
+
 .quick-link:hover {
   background-color: var(--bg-modifier-hover);
   color: var(--text-channel-hover);
 }
+
 .ql-icon {
   margin-right: 12px;
   font-size: 18px;
@@ -157,6 +242,11 @@ body {
 .category {
   margin-top: 16px;
 }
+
+.category:first-child {
+  margin-top: 4px;
+}
+
 .cat-header {
   display: flex;
   align-items: center;
@@ -164,73 +254,108 @@ body {
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  padding: 0 8px;
-  margin-bottom: 4px;
+  padding: 4px 8px;
+  margin-bottom: 2px;
   cursor: pointer;
+  letter-spacing: 0.4px;
+  user-select: none;
+  transition: color 0.15s ease;
 }
+
 .cat-header:hover {
   color: var(--text-normal);
 }
+
 .cat-arrow {
   font-size: 10px;
-  margin-right: 4px;
+  margin-right: 6px;
+  transition: transform 0.2s ease;
 }
+
 .cat-add {
   margin-left: auto;
   font-size: 16px;
   line-height: 1;
+  color: var(--text-muted);
+}
+
+.cat-add:hover {
+  color: var(--interactive-active);
 }
 
 .channel {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
+  padding: 7px 10px;
   border-radius: 4px;
   color: var(--text-channel);
   font-weight: 500;
+  font-size: 14.5px;
   cursor: pointer;
   margin-bottom: 2px;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
+
 .channel:hover {
   background-color: var(--bg-modifier-hover);
   color: var(--text-channel-hover);
 }
+
 .channel.active {
   background-color: var(--bg-modifier-selected);
   color: var(--text-channel-active);
+  font-weight: 600;
 }
+
 .ch-hash {
   font-size: 18px;
   color: #80848e;
   margin-right: 8px;
+  line-height: 1;
 }
+
 .ch-voice {
   font-size: 14px;
   margin-right: 8px;
 }
+
 .ch-actions {
   margin-left: auto;
   display: none;
   gap: 8px;
 }
-.channel:hover .ch-actions, .channel.active .ch-actions {
+
+.channel:hover .ch-actions,
+.channel.active .ch-actions {
   display: flex;
 }
 
+/* User Panel at Sidebar Bottom */
 .user-panel {
-  height: 52px;
+  height: var(--user-panel-height);
   background-color: #232428;
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 10px;
   flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+  gap: 10px;
 }
+
+.user-panel:hover {
+  background-color: #3b3d42;
+}
+
 .user-avatar-wrap {
   position: relative;
   width: 32px;
   height: 32px;
-  margin-right: 8px;
+  flex-shrink: 0;
 }
+
 .user-avatar {
   width: 100%;
   height: 100%;
@@ -239,108 +364,228 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #ffffff;
   font-weight: bold;
+  font-size: 14px;
 }
+
 .status-dot {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background-color: var(--status-online);
   border: 3px solid #232428;
 }
+
 .user-info {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 0; /* Ensures ellipsis works when squeezed */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
+
 .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
 }
+
 .user-sub {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
+
 .user-controls {
   display: flex;
   gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
+
 .user-controls span {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
   cursor: pointer;
   color: var(--interactive-normal);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
+
 .user-controls span:hover {
   background-color: var(--bg-modifier-hover);
   color: var(--interactive-hover);
 }
 
-/* 3. Main Chat Area */
+/* ==========================================================================
+   3. Main Chat & View Area
+   ========================================================================== */
 .chat-area {
-  flex: 1;
+  flex: 1 1 0%;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
   min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
+
 .top-bar {
-  height: 48px;
+  height: var(--topbar-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
   border-bottom: 1px solid #1f2023;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  background-color: var(--bg-primary);
+  z-index: 50;
+  gap: 12px;
 }
+
 .top-bar-left {
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 8px;
 }
+
 .top-bar-left .ch-hash {
-  font-size: 24px;
+  font-size: 22px;
+  color: #80848e;
+  line-height: 1;
+  flex-shrink: 0;
 }
+
 .top-bar-left h2 {
   font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   color: var(--interactive-normal);
-}
-.search-box {
-  background-color: #1e1f22;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  width: 144px;
+  flex-shrink: 0;
 }
 
+.search-box {
+  background-color: #1e1f22;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 144px;
+  color: var(--text-normal);
+  border: 1px solid transparent;
+}
+
+.search-box:focus {
+  outline: none;
+  border-color: var(--brand-color);
+}
+
+/* Mobile Toggle Buttons */
+.mobile-hamburger,
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--interactive-normal);
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+  user-select: none;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.mobile-hamburger:hover,
+.mobile-menu-btn:hover {
+  color: var(--interactive-active);
+  background-color: var(--bg-modifier-hover);
+}
+
+.mobile-members-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--interactive-normal);
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+  user-select: none;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.mobile-members-btn:hover {
+  color: var(--interactive-active);
+  background-color: var(--bg-modifier-hover);
+}
+
+/* Messages / Channel View Body */
 .messages {
-  flex: 1;
+  flex: 1 1 0%;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  animation: fadeIn 0.3s ease-out;
 }
+
+.messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background: #1a1b1e;
+  border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .welcome-message {
   margin-bottom: 24px;
 }
+
 .welcome-icon {
   width: 68px;
   height: 68px;
@@ -349,18 +594,29 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  color: #fff;
+  font-size: 38px;
+  color: #ffffff;
   margin-bottom: 16px;
 }
+
 .welcome-message h1 {
-  color: #fff;
+  color: #ffffff;
   margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.welcome-message p {
+  color: var(--text-muted);
+  font-size: 15px;
 }
 
 .chat-input-area {
-  padding: 0 16px 24px 16px;
+  padding: 0 16px 20px 16px;
+  flex-shrink: 0;
+  background-color: var(--bg-primary);
 }
+
 .chat-input {
   background-color: #383a40;
   border-radius: 8px;
@@ -368,7 +624,9 @@ body {
   align-items: center;
   padding: 0 16px;
   height: 44px;
+  gap: 12px;
 }
+
 .attach-btn {
   width: 24px;
   height: 24px;
@@ -379,37 +637,81 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  font-size: 14px;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
 }
+
+.attach-btn:hover {
+  background-color: #ffffff;
+}
+
 .chat-input input {
   flex: 1;
   background: transparent;
   border: none;
   color: var(--text-normal);
-  padding: 0 16px;
-  font-size: 16px;
+  padding: 0;
+  font-size: 15px;
   outline: none;
 }
+
+.chat-input input::placeholder {
+  color: var(--text-muted);
+}
+
 .chat-actions {
   display: flex;
   gap: 12px;
   color: var(--interactive-normal);
-}
-
-/* 4. Members List */
-.members-list {
-  width: 240px;
-  background-color: var(--bg-secondary);
-  padding: 24px 8px;
-  overflow-y: auto;
   flex-shrink: 0;
 }
+
+/* Quick Shortcuts Grid */
+.shortcut-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.shortcut-grid .discord-btn {
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+
+/* ==========================================================================
+   4. Members List
+   ========================================================================== */
+.members-list {
+  width: var(--members-width);
+  background-color: var(--bg-secondary);
+  padding: 16px 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  height: 100%;
+  z-index: 80;
+}
+
+.members-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.members-list::-webkit-scrollbar-thumb {
+  background: #1a1b1e;
+  border-radius: 2px;
+}
+
 .members-category {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  margin: 16px 8px 4px 8px;
+  margin: 12px 8px 4px 8px;
+  letter-spacing: 0.3px;
+  user-select: none;
 }
 
 .member {
@@ -418,20 +720,25 @@ body {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  user-select: none;
+  transition: background-color 0.15s ease;
 }
+
 .member:hover {
   background-color: var(--bg-modifier-hover);
 }
 
-/* Custom Admin Banner styling based on screenshot */
+/* Custom Admin Banner styling */
 .admin-member {
   margin-top: 8px;
-  background-color: #251221; /* Match the dark red/purple from screenshot */
-  border: 1px solid rgba(255,255,255,0.05);
+  background-color: #251221;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
 .admin-member:hover {
   background-color: #2f172a;
 }
+
 .member-banner {
   position: absolute;
   top: 0;
@@ -441,8 +748,8 @@ body {
   background-image: url('https://cdn.pixabay.com/photo/2018/01/14/23/12/nature-3082832_960_720.jpg');
   background-size: cover;
   background-position: center;
-  mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.6) 0%, transparent 100%);
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
   opacity: 0.8;
   pointer-events: none;
 }
@@ -460,12 +767,16 @@ body {
   width: 32px;
   height: 32px;
   margin-right: 12px;
+  flex-shrink: 0;
 }
+
 .member-avatar {
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  object-fit: cover;
 }
+
 .member.offline .member-avatar {
   opacity: 0.4;
   filter: grayscale(100%);
@@ -474,29 +785,44 @@ body {
 .member-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
+
 .member-name {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 500;
   color: var(--text-channel-hover);
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .member.offline .member-name {
   color: var(--text-muted);
 }
+
 .crown {
-  margin-left: 4px;
+  margin-left: 5px;
   font-size: 12px;
 }
+
 .member-status {
-  font-size: 11px;
+  font-size: 11.5px;
   color: #dbdee1;
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* ==========================================================================
+   5. Buttons, Embeds, Drop Zones & Equalizer
+   ========================================================================== */
 .discord-btn {
   background-color: var(--brand-color);
-  color: white;
+  color: #ffffff;
   border: none;
   padding: 10px 16px;
   border-radius: 4px;
@@ -504,77 +830,138 @@ body {
   font-weight: 500;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
+
 .discord-btn:hover {
-  background-color: #4752c4;
+  background-color: var(--brand-color-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* --- ANIMATIONS AND MODAL --- */
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.discord-btn:active {
+  transform: translateY(0);
 }
 
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(35, 165, 90, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0); }
-}
-
-.messages {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.embed, .drop-zone, .discord-btn, .channel, .member {
+.embed,
+.drop-zone {
   transition: all 0.2s ease;
 }
 
-.discord-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+/* Equalizer Bars & Animation */
+.eq-container {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 20px;
+  padding: 0 4px;
+}
+
+.eq-bar {
+  width: 3px;
+  background: #ffb347;
+  border-radius: 1px;
+  animation: eq 0.9s ease-in-out infinite alternate;
+}
+
+.eq-bar:nth-child(1) { animation-delay: 0.05s; height: 6px; }
+.eq-bar:nth-child(2) { animation-delay: 0.3s;  height: 16px; }
+.eq-bar:nth-child(3) { animation-delay: 0.15s; height: 10px; }
+.eq-bar:nth-child(4) { animation-delay: 0.45s; height: 18px; }
+
+/* ==========================================================================
+   6. Keyframe Animations
+   ========================================================================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(35, 165, 90, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(35, 165, 90, 0);
+  }
+}
+
+@keyframes bounce {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-18px);
+  }
+}
+
+@keyframes eq {
+  0% {
+    height: 4px;
+  }
+  50% {
+    height: 18px;
+  }
+  100% {
+    height: 8px;
+  }
 }
 
 .status-dot.online {
   animation: pulseGlow 2s infinite;
 }
 
-.user-panel {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.user-panel:hover {
-  background-color: #3b3d42;
-}
-
-/* Modal Styles */
+/* ==========================================================================
+   7. Modals and Overlays
+   ========================================================================== */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  padding: 16px;
+  z-index: 2000;
   animation: fadeIn 0.2s ease-out;
 }
 
 .server-modal {
-  background: #111214;
-  width: 400px;
+  background: var(--bg-floating);
+  width: 440px;
+  max-width: 95vw;
+  max-height: 90vh;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  transform: translateY(0);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  margin: auto;
 }
 
 .modal-banner {
   height: 120px;
   background: linear-gradient(135deg, #5865F2, #f47fff);
+  flex-shrink: 0;
 }
 
 .modal-avatar {
@@ -582,11 +969,12 @@ body {
   margin-left: 20px;
   width: 80px;
   height: 80px;
-  background: #111214;
+  background: var(--bg-floating);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .avatar-img {
@@ -594,7 +982,7 @@ body {
   height: 68px;
   background: #f04747;
   border-radius: 50%;
-  color: white;
+  color: #ffffff;
   font-size: 32px;
   font-weight: bold;
   display: flex;
@@ -604,10 +992,11 @@ body {
 
 .modal-content {
   padding: 16px 20px 24px;
+  overflow-y: auto;
 }
 
 .modal-content h2 {
-  color: white;
+  color: #ffffff;
   margin-top: 8px;
   font-size: 20px;
   margin-bottom: 8px;
@@ -619,6 +1008,7 @@ body {
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid #1e1f22;
+  flex-wrap: wrap;
 }
 
 .modal-badges span {
@@ -638,6 +1028,8 @@ body {
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .modal-section p {
@@ -646,21 +1038,25 @@ body {
   line-height: 1.5;
 }
 
-/* Drop Overlay missing CSS */
+/* File Drag & Drop Overlay */
 #drop-overlay {
   display: none;
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(88, 101, 242, 0.9);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(88, 101, 242, 0.92);
   z-index: 9999;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .drop-modal {
   background: transparent;
-  color: white;
+  color: #ffffff;
   text-align: center;
   pointer-events: none;
 }
@@ -668,90 +1064,255 @@ body {
 .drop-icon {
   font-size: 80px;
   margin-bottom: 16px;
-  animation: bounce 1s infinite alternate;
+  animation: bounce 0.8s infinite alternate ease-in-out;
 }
 
-@keyframes bounce {
-  from { transform: translateY(0); }
-  to { transform: translateY(-20px); }
+/* Mobile Backdrop / Dimmer */
+.mobile-overlay {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 800;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 
-/* --- MOBILE RESPONSIVE UI --- */
-.mobile-menu-btn, .mobile-members-btn {
-  display: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: var(--interactive-normal);
-  padding: 4px;
-}
-.mobile-menu-btn:hover, .mobile-members-btn:hover {
-  color: white;
+body.sidebar-open .mobile-overlay,
+body.members-open .mobile-overlay {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-@media (max-width: 768px) {
-  .mobile-menu-btn { display: block; margin-right: 12px; }
-  .mobile-members-btn { display: block; margin-left: auto; padding-right: 16px; }
+/* ==========================================================================
+   8. RESPONSIVE BREAKPOINTS
+   ========================================================================== */
 
-  /* Hide Rails & Sidebars by Default */
+/* --------------------------------------------------------------------------
+   WIDE SCREEN (>1200px)
+   -------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+  :root {
+    --sidebar-width: 260px;
+    --members-width: 260px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   DESKTOP (>900px)
+   -------------------------------------------------------------------------- */
+@media (min-width: 900.02px) {
+  .mobile-hamburger,
+  .mobile-menu-btn,
+  .mobile-members-btn {
+    display: none !important;
+  }
+
   .guild-rail {
-    position: fixed;
-    left: -72px;
-    bottom: 0;
-    z-index: 1000;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex !important;
+    position: relative;
   }
-  
+
   .sidebar {
-    position: fixed;
-    left: -320px;
-    bottom: 0;
-    z-index: 999;
-    width: calc(100vw - 72px);
-    max-width: 280px;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 2px 0 8px rgba(0,0,0,0.5);
+    display: flex !important;
+    position: relative;
+    transform: none !important;
+    left: auto !important;
   }
-  
+
+  .members-list {
+    display: block !important;
+    position: relative;
+    transform: none !important;
+    right: auto !important;
+  }
+
+  .mobile-overlay {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   TABLET (600px - 900px)
+   - Guild-rail shown (72px)
+   - Sidebar shown (200px)
+   - Members list hidden by default (slide-out drawer when toggled)
+   - Members toggle button visible in top-bar
+   - Hamburger hidden since sidebar is already visible
+   -------------------------------------------------------------------------- */
+@media (min-width: 600px) and (max-width: 900px) {
+  :root {
+    --sidebar-width: 200px;
+  }
+
+  .guild-rail {
+    display: flex !important;
+    width: var(--guild-rail-width);
+    position: relative;
+  }
+
+  .sidebar {
+    display: flex !important;
+    width: var(--sidebar-width);
+    position: relative;
+    transform: none !important;
+    left: auto !important;
+    box-shadow: none;
+  }
+
+  /* Hamburger hidden on tablet because sidebar is open */
+  .mobile-hamburger,
+  .mobile-menu-btn {
+    display: none !important;
+  }
+
+  /* Members toggle button visible on tablet */
+  .mobile-members-btn {
+    display: inline-flex !important;
+  }
+
+  /* Members drawer hidden off-screen by default */
   .members-list {
     position: fixed;
+    top: 0;
     right: -280px;
     bottom: 0;
-    z-index: 999;
     width: 260px;
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: -2px 0 8px rgba(0,0,0,0.5);
+    z-index: 1000;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+    transition: var(--drawer-transition);
   }
 
-  /* Drawer Open States */
-  body.sidebar-open .guild-rail { left: 0; }
-  body.sidebar-open .sidebar { left: 72px; }
-  body.members-open .members-list { right: 0; }
+  body.members-open .members-list {
+    right: 0;
+  }
+}
 
-  /* Make grids 1 column */
-  div[style*="display: grid"] {
+/* --------------------------------------------------------------------------
+   MOBILE (<600px)
+   - Guild rail hidden
+   - Sidebar & Members as full-width drawers from left / right
+   - Top-bar hamburger ☰ button on left visible
+   - Top-bar members 👥 toggle on right visible
+   - Everything single-column layout
+   - Server modal max 95vw, properly centered
+   -------------------------------------------------------------------------- */
+@media (max-width: 599.98px) {
+  /* Guild rail completely hidden on mobile */
+  .guild-rail {
+    display: none !important;
+  }
+
+  /* Both mobile action buttons visible */
+  .mobile-hamburger,
+  .mobile-menu-btn {
+    display: inline-flex !important;
+    margin-right: 6px;
+  }
+
+  .mobile-members-btn {
+    display: inline-flex !important;
+    margin-left: auto;
+  }
+
+  .top-bar-right .search-box {
+    display: none; /* Hide wide search box on mobile to make room */
+  }
+
+  /* Sidebar Drawer - full-width drawer from left */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -100vw;
+    width: min(320px, 86vw);
+    max-width: 100vw;
+    z-index: 1100;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
+    transition: var(--drawer-transition);
+  }
+
+  body.sidebar-open .sidebar {
+    left: 0;
+  }
+
+  /* Members Drawer - full-width drawer from right */
+  .members-list {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: -100vw;
+    width: min(320px, 86vw);
+    max-width: 100vw;
+    z-index: 1100;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.6);
+    transition: var(--drawer-transition);
+  }
+
+  body.members-open .members-list {
+    right: 0;
+  }
+
+  /* Force single-column on inline-styled grids & shortcut containers */
+  div[style*="display: grid"],
+  div[style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
-  
-  .server-modal {
-    width: 90%;
+
+  .shortcut-grid {
+    flex-direction: column;
   }
 
-  .top-bar-left h2 { font-size: 16px; }
-  
+  .shortcut-grid .discord-btn {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  /* Chat and message spacing on small screens */
   .messages {
-    padding: 16px !important;
+    padding: 12px 10px !important;
   }
-}
 
-.mobile-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 900;
-  backdrop-filter: blur(2px);
-}
+  .chat-input-area {
+    padding: 0 10px 14px 10px;
+  }
 
-body.sidebar-open .mobile-overlay, body.members-open .mobile-overlay {
-  display: block;
+  .top-bar {
+    padding: 0 10px;
+  }
+
+  .top-bar-left h2 {
+    font-size: 15px;
+  }
+
+  /* Modal max width and proper centering */
+  .server-modal {
+    width: 95vw;
+    max-width: 95vw;
+    margin: auto;
+  }
+
+  .modal-content {
+    padding: 14px 16px 20px;
+  }
+
+  /* User panel optimization for mobile */
+  .user-panel {
+    padding: 0 12px;
+  }
+
+  .user-name {
+    font-size: 13.5px;
+  }
+
+  .user-sub {
+    font-size: 11px;
+  }
 }

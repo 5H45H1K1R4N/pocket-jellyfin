@@ -72,7 +72,13 @@ function renderMembers() {
 const VIEWS = {
   'home': `
     <div class="top-bar">
-      <div class="top-bar-left"><span class="ch-hash">#</span><h2>home</h2></div>
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+        <span class="ch-hash">#</span><h2>home</h2>
+      </div>
+      <div class="top-bar-right">
+        <button class="mobile-members-btn" onclick="toggleMembers()" aria-label="Toggle Members">👥</button>
+      </div>
     </div>
     <div class="messages" style="padding: 32px; justify-content: flex-start;">
       <h1 style="color: white; margin-bottom: 24px; font-size: 28px;">Server Dashboard</h1>
@@ -94,18 +100,23 @@ const VIEWS = {
         </div>
       </div>
       <h3 style="color: white; margin-bottom: 16px; font-size: 18px;">Quick Shortcuts</h3>
-      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-        <button class="discord-btn" onclick="navigate('movies-and-tv')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">🎬</span><span>Jellyfin Media</span></button>
-        <button class="discord-btn" onclick="navigate('peppy-radio')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📻</span><span>Peppy Radio</span></button>
-        <button class="discord-btn" onclick="navigate('file-drop')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📁</span><span>File Drop</span></button>
-        <button class="discord-btn" onclick="navigate('minecraft-server')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">⛏️</span><span>Minecraft Server</span></button>
+      <div class="shortcut-grid">
+        <button class="discord-btn" onclick="navigate('movies-and-tv')" style="padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">🎬</span><span>Jellyfin Media</span></button>
+        <button class="discord-btn" onclick="navigate('peppy-radio')" style="padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📻</span><span>Peppy Radio</span></button>
+        <button class="discord-btn" onclick="navigate('file-drop')" style="padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📁</span><span>File Drop</span></button>
+        <button class="discord-btn" onclick="navigate('minecraft-server')" style="padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">⛏️</span><span>Minecraft Server</span></button>
       </div>
     </div>
   `,
   'general-chat': `
     <div class="top-bar">
-      <div class="top-bar-left"><span class="ch-hash">#</span><h2>general-chat</h2></div>
-      <div class=top-bar-right><span class=mobile-members-btn onclick=toggleMembers()>👥</span></div>
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+        <span class="ch-hash">#</span><h2>general-chat</h2>
+      </div>
+      <div class="top-bar-right">
+        <button class="mobile-members-btn" onclick="toggleMembers()" aria-label="Toggle Members">👥</button>
+      </div>
     </div>
     <div class="messages" id="chat-messages" style="overflow-y: auto;">
       <div class="welcome-message">
@@ -122,7 +133,13 @@ const VIEWS = {
   `,
   'movies-and-tv': `
     <div class="top-bar">
-      <div class="top-bar-left"><span class="ch-hash">#</span><h2>movies-and-tv</h2></div>
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+        <span class="ch-hash">#</span><h2>movies-and-tv</h2>
+      </div>
+      <div class="top-bar-right">
+        <button class="mobile-members-btn" onclick="toggleMembers()" aria-label="Toggle Members">👥</button>
+      </div>
     </div>
     <div class="messages" style="padding: 0; justify-content: flex-start; overflow-y: auto;">
       <div style="background: linear-gradient(135deg, #1f1235 0%, #0d0614 100%); padding: 64px 32px; text-align: center; border-bottom: 1px solid #1f2023;">
@@ -137,7 +154,13 @@ const VIEWS = {
   `,
   'file-drop': `
     <div class="top-bar">
-      <div class="top-bar-left"><span class="ch-hash">#</span><h2>file-drop</h2></div>
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+        <span class="ch-hash">#</span><h2>file-drop</h2>
+      </div>
+      <div class="top-bar-right">
+        <button class="mobile-members-btn" onclick="toggleMembers()" aria-label="Toggle Members">👥</button>
+      </div>
     </div>
     <div class="messages" style="padding: 32px; justify-content: flex-start; overflow-y: auto;">
       <h2 style="color: white; margin-bottom: 24px; font-size: 28px;">File Drop & Storage</h2>
@@ -161,8 +184,11 @@ const VIEWS = {
   `,
   'minecraft-server': `
     <div class="top-bar">
-      <div class="top-bar-left"><span class="ch-hash">#</span><h2>minecraft-server</h2></div>
-      <div class=top-bar-right><span class=mobile-members-btn onclick=toggleMembers()>👥</span></div>
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+        <span class="ch-hash">#</span><h2>minecraft-server</h2>
+      </div>
+      <div class="top-bar-right"><span class="mobile-members-btn" onclick="toggleMembers()">👥</span></div>
     </div>
     <div class="messages" style="padding: 32px; justify-content: flex-start; overflow-y: auto; background: linear-gradient(180deg, rgba(35,165,90,0.03) 0%, transparent 400px);">
       <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px;">
@@ -197,7 +223,10 @@ const VIEWS = {
   `,
   'peppy-radio': `
     <div class="top-bar">
-      <div class="top-bar-left"><span class="ch-hash">#</span><h2>peppy-radio</h2></div>
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+        <span class="ch-hash">#</span><h2>peppy-radio</h2>
+      </div>
       <div class="top-bar-right"><span class="mobile-members-btn" onclick="toggleMembers()">👥</span></div>
     </div>
     <div class="messages" style="padding: 32px; justify-content: flex-start; overflow-y: auto; background: linear-gradient(180deg, rgba(255,179,71,0.04) 0%, transparent 450px);">
