@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1017">
+<title>DJ Booth</title>
+<style>
+  :root{--bg:#0d1017;--panel:#161b26;--line:#252c3b;--ink:#eef0f5;--mute:#8b93a7;--amber:#ffb347;--red:#ff4d5e;--green:#4ade80}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;justify-content:center;color:var(--ink);
+    background:radial-gradient(1000px 520px at 50% -8%,#222b3f,var(--bg));
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{width:100%;max-width:520px;padding:28px 18px 48px}
+  h1{font-size:20px;margin:0 0 20px;letter-spacing:.04em;font-weight:650}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px}
+  label{display:block;font-size:12px;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 6px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=password]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+    background:#0f131c;color:var(--ink);font:inherit;font-size:17px}
+  input[type=range]{width:100%;accent-color:var(--amber)}
+  button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:15px;font-weight:700;font-size:16px}
+  button:active{transform:scale(.98)}
+  .primary{width:100%;margin-top:18px;background:var(--amber);color:#1a1204}
+  #live{width:100%;background:var(--red);color:#fff;font-size:19px;padding:18px}
+  body.onair #live{background:#2a3144;color:var(--ink)}
+  .two{display:flex;gap:10px;margin-top:12px}
+  .two button{flex:1;background:#232a3b;color:var(--ink)}
+  .two button.on{background:var(--amber);color:#1a1204}
+  .meter{height:12px;border-radius:7px;background:#0f131c;overflow:hidden;margin-top:6px}
+  .meter div{height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--amber) 70%,var(--red));transition:width .06s}
+  #msg{font-size:14px;margin-top:12px;min-height:20px;color:var(--mute)}
+  #msg.err{color:var(--red)}
+  .meta{font-size:13px;color:var(--mute);margin-top:14px;word-break:break-word}
+  .meta b{color:var(--ink);font-weight:600}
+  .hide{display:none!important}
+  .warn{font-size:13px;color:var(--amber);line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+  <h1>DJ Booth</h1>
+
+  <section class="card" id="login">
+    <label for="pin">DJ PIN</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="from config.json">
+    <button class="primary" id="enter">Enter booth</button>
+    <div id="loginMsg" class="meta"></div>
+  </section>
+
+  <div id="booth" class="hide">
+    <section class="card">
+      <label for="name">On-air name</label>
+      <input id="name" type="text" maxlength="40" value="Home DJ">
+      <div style="height:18px"></div>
+      <button id="live">Go on air</button>
+
+      <label>Mic level</label>
+      <div class="meter"><div id="level"></div></div>
+
+      <label for="gain">Mic boost</label>
+      <input id="gain" type="range" min="0.5" max="4" step="0.1" value="1.5">
+
+      <div class="two">
+        <button id="mute" disabled>Mute mic</button>
+        <button id="skip">Skip song</button>
+      </div>
+      <div id="msg"></div>
+      <div class="meta" id="secure"></div>
+    </section>
+
+    <section class="card">
+      <div class="meta" style="margin-top:0">Now playing: <b id="np">–</b></div>
+      <div class="meta"><b id="lc">0</b> listening</div>
+      <div class="meta">Tip: don't tune in on this same device while on air, or you'll get an echo. Use headphones if you want to monitor.</div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const TARGET_RATE = 16000;
+let ws, authed = false, onAir = false, sending = false, muted = false;
+let stream, actx, proc, gainNode, peak = 0;
+
+function msg(t, err) { const m = $('msg'); m.textContent = t || ''; m.className = err ? 'err' : ''; }
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(proto + '://' + location.host + '/ws');
+  ws.onopen = () => { const p = sessionStorage.getItem('pin'); if (p) ws.send(JSON.stringify({ type: 'auth', pin: p })); };
+  ws.onclose = () => { authed = false; if (onAir) stopLive(true); setTimeout(connect, 2000); };
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.type === 'auth') {
+      if (m.ok) { authed = true; $('login').classList.add('hide'); $('booth').classList.remove('hide'); }
+      else { sessionStorage.removeItem('pin'); $('loginMsg').textContent = m.error; }
+    } else if (m.type === 'liveAck') {
+      if (m.ok) { sending = true; document.body.classList.add('onair'); $('live').textContent = 'Stop broadcast'; msg('You are on air.'); }
+      else { msg(m.error, true); stopLive(true); }
+    } else if (m.type === 'hello' || m.type === 'now') {
+      $('np').textContent = m.now ? m.now.title : '–';
+      if (m.type === 'hello') $('lc').textContent = m.listeners;
+    } else if (m.type === 'stats') $('lc').textContent = m.listeners;
+  };
+}
+
+$('enter').onclick = () => {
+  const pin = $('pin').value.trim();
+  if (!pin) return;
+  sessionStorage.setItem('pin', pin);
+  ws.send(JSON.stringify({ type: 'auth', pin }));
+};
+$('pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('enter').click(); });
+
+function downsample(buf, inRate, outRate) {
+  if (inRate === outRate) return buf;
+  const ratio = inRate / outRate, n = Math.floor(buf.length / ratio), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = Math.floor(i * ratio), b = Math.min(Math.floor((i + 1) * ratio), buf.length);
+    let s = 0; for (let j = a; j < b; j++) s += buf[j];
+    out[i] = s / Math.max(1, b - a);
+  }
+  return out;
+}
+
+async function startLive() {
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    msg('The browser blocks the mic on plain http. Open the https:// address (run ./gen-cert.sh on the server first).', true);
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
+    });
+  } catch (e) { msg('Mic permission was denied.', true); return; }
+
+  try { actx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_RATE }); }
+  catch (e) { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+  await actx.resume();
+
+  const src = actx.createMediaStreamSource(stream);
+  gainNode = actx.createGain(); gainNode.gain.value = Number($('gain').value);
+  proc = actx.createScriptProcessor(4096, 1, 1);
+  proc.onaudioprocess = (e) => {
+    const inp = e.inputBuffer.getChannelData(0);
+    let p = 0; for (let i = 0; i < inp.length; i++) { const a = Math.abs(inp[i]); if (a > p) p = a; }
+    peak = Math.max(p, peak * 0.85);
+    if (!sending || muted || !ws || ws.readyState !== 1) return;
+    const d = downsample(inp, actx.sampleRate, TARGET_RATE);
+    const out = new Int16Array(d.length);
+    for (let i = 0; i < d.length; i++) { const v = Math.max(-1, Math.min(1, d[i])); out[i] = v < 0 ? v * 32768 : v * 32767; }
+    ws.send(out.buffer);
+  };
+  src.connect(gainNode); gainNode.connect(proc); proc.connect(actx.destination);
+
+  onAir = true;
+  msg('Going on air…');
+  ws.send(JSON.stringify({ type: 'live', on: true, name: $('name').value.trim() || 'DJ' }));
+  $('mute').disabled = false;
+  $('name').disabled = true;
+}
+
+function stopLive(silent) {
+  onAir = false; sending = false; muted = false;
+  if (ws && ws.readyState === 1 && !silent) ws.send(JSON.stringify({ type: 'live', on: false }));
+  if (proc) { proc.disconnect(); proc.onaudioprocess = null; proc = null; }
+  if (actx) { actx.close(); actx = null; }
+  if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+  document.body.classList.remove('onair');
+  $('live').textContent = 'Go on air';
+  $('mute').disabled = true; $('mute').textContent = 'Mute mic'; $('mute').classList.remove('on');
+  $('name').disabled = false;
+  if (!silent) msg('Broadcast stopped.');
+}
+
+$('live').onclick = () => (onAir ? stopLive() : startLive());
+$('mute').onclick = () => {
+  muted = !muted;
+  $('mute').textContent = muted ? 'Unmute mic' : 'Mute mic';
+  $('mute').classList.toggle('on', muted);
+};
+$('skip').onclick = () => ws && ws.readyState === 1 && ws.send(JSON.stringify({ type: 'skip' }));
+$('gain').oninput = (e) => { if (gainNode) gainNode.gain.value = Number(e.target.value); };
+
+(function meter() { $('level').style.width = Math.min(100, peak * 110) + '%'; requestAnimationFrame(meter); })();
+
+if (!window.isSecureContext) {
+  const s = $('secure'); s.className = 'warn';
+  s.textContent = 'Heads up: this page is on plain http, so the browser will not allow the microphone. Use the https:// address.';
+}
+window.addEventListener('beforeunload', () => { if (onAir && ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'live', on: false })); });
+connect();
+</script>
+</body>
+</html>

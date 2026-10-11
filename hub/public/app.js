@@ -94,10 +94,11 @@ const VIEWS = {
         </div>
       </div>
       <h3 style="color: white; margin-bottom: 16px; font-size: 18px;">Quick Shortcuts</h3>
-      <div style="display: flex; gap: 16px;">
-        <button class="discord-btn" onclick="navigate('movies-and-tv')" style="flex: 1; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">🎬</span><span>Jellyfin Media</span></button>
-        <button class="discord-btn" onclick="navigate('file-drop')" style="flex: 1; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📁</span><span>File Drop</span></button>
-        <button class="discord-btn" onclick="navigate('minecraft-server')" style="flex: 1; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">⛏️</span><span>Minecraft Server</span></button>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <button class="discord-btn" onclick="navigate('movies-and-tv')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">🎬</span><span>Jellyfin Media</span></button>
+        <button class="discord-btn" onclick="navigate('peppy-radio')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📻</span><span>Peppy Radio</span></button>
+        <button class="discord-btn" onclick="navigate('file-drop')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">📁</span><span>File Drop</span></button>
+        <button class="discord-btn" onclick="navigate('minecraft-server')" style="flex: 1; min-width: 140px; padding: 16px; font-size: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #232428; border: 1px solid #1e1f22;"><span style="font-size: 24px;">⛏️</span><span>Minecraft Server</span></button>
       </div>
     </div>
   `,
@@ -189,6 +190,78 @@ const VIEWS = {
           <h3 style="color: var(--text-muted); font-size: 13px; text-transform: uppercase; margin-bottom: 16px; font-weight: 800;">Players Online</h3>
           <div id="minecraft-players-list" style="display: flex; flex-direction: column; gap: 12px;">
             <div style="color: var(--text-muted);">Fetching players...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  'peppy-radio': `
+    <div class="top-bar">
+      <div class="top-bar-left"><span class="ch-hash">#</span><h2>peppy-radio</h2></div>
+      <div class="top-bar-right"><span class="mobile-members-btn" onclick="toggleMembers()">👥</span></div>
+    </div>
+    <div class="messages" style="padding: 32px; justify-content: flex-start; overflow-y: auto; background: linear-gradient(180deg, rgba(255,179,71,0.04) 0%, transparent 450px);">
+      <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px;">
+        <div style="width: 96px; height: 96px; border-radius: 16px; background: #232428; display: flex; align-items: center; justify-content: center; font-size: 48px; box-shadow: 0 8px 16px rgba(0,0,0,0.25); border: 2px solid #ffb347;">📻</div>
+        <div>
+          <h1 style="color: white; font-size: 36px; margin-bottom: 8px; font-weight: 800;">Peppy Radio</h1>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffb347; box-shadow: 0 0 10px #ffb347;"></div>
+            <span style="color: #ffb347; font-weight: 700; font-size: 16px;">Private LAN Station · Port 8443</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 24px;">
+        <!-- Listener Box -->
+        <div style="background: #2b2d31; padding: 24px; border-radius: 12px; border: 1px solid #1e1f22; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="color: var(--text-muted); font-size: 13px; text-transform: uppercase; font-weight: 800;">🎧 Tune In (Listener)</h3>
+              <span style="font-size: 12px; color: #23a55a; font-weight: bold;">Continuous 24/7 Loop</span>
+            </div>
+            <p style="color: var(--text-normal); font-size: 14px; margin-bottom: 20px; line-height: 1.5;">Listen live to the home station music. When someone speaks on air, the music automatically dips in real-time.</p>
+            <div style="background: #1e1f22; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <button id="hub-radio-btn" class="discord-btn" style="background: #ffb347; color: #1a1204; font-weight: bold; padding: 10px 20px; font-size: 15px;" onclick="toggleRadioPlay()">▶ Tune In</button>
+                <input id="hub-radio-vol" type="range" min="0" max="1" step="0.05" value="0.9" style="flex: 1; accent-color: #ffb347;" oninput="setRadioVolume(this.value)">
+              </div>
+              <div id="hub-radio-status" style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Audio stream: https://192.168.31.178:8443/stream</div>
+            </div>
+          </div>
+          <button class="discord-btn" style="background: #35373c; color: white; padding: 10px; width: 100%;" onclick="window.open('https://192.168.31.178:8443/')">↗ Open Full Web Player in New Tab</button>
+        </div>
+
+        <!-- DJ Booth Box -->
+        <div style="background: #2b2d31; padding: 24px; border-radius: 12px; border: 1px solid #1e1f22; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="color: #ff4d5e; font-size: 13px; text-transform: uppercase; font-weight: 800;">🎙️ DJ Booth (Go On Air)</h3>
+              <span style="font-size: 12px; background: rgba(255,77,94,0.15); color: #ff4d5e; padding: 3px 8px; border-radius: 10px; font-weight: bold;">PIN Protected</span>
+            </div>
+            <p style="color: var(--text-normal); font-size: 14px; margin-bottom: 20px; line-height: 1.5;">Broadcast your microphone voice across the entire house from your phone or laptop. Music ducks automatically while talking.</p>
+            <div style="background: #1e1f22; border-radius: 8px; padding: 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+              <div><strong>DJ URL:</strong> <code>https://192.168.31.178:8443/dj</code></div>
+              <div><strong>Security:</strong> Requires PIN from <code>radio/config.json</code></div>
+            </div>
+          </div>
+          <button class="discord-btn" style="background: #ff4d5e; color: white; padding: 12px; width: 100%; font-weight: bold; font-size: 15px;" onclick="window.open('https://192.168.31.178:8443/dj')">🎤 Enter DJ Booth & Broadcast</button>
+        </div>
+      </div>
+
+      <!-- Quick Info / Commands -->
+      <div style="background: #2b2d31; padding: 20px 24px; border-radius: 12px; border: 1px solid #1e1f22;">
+        <h3 style="color: white; font-size: 15px; margin-bottom: 12px; font-weight: 700;">📁 Station Folders & Controls (Termux on Phone)</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; font-size: 13px; color: var(--text-normal);">
+          <div style="background: #1e1f22; padding: 12px; border-radius: 6px;">
+            <div style="color: #ffb347; font-weight: bold; margin-bottom: 4px;">Music Folder</div>
+            <code>~/pocket-jellyfin/radio/music</code>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Drop any MP3 files here or convert via <code>./convert.sh</code></div>
+          </div>
+          <div style="background: #1e1f22; padding: 12px; border-radius: 6px;">
+            <div style="color: #ffb347; font-weight: bold; margin-bottom: 4px;">Termux Commands</div>
+            <code>radio start | stop | status | logs</code>
+            <div style="color: var(--text-muted); font-size: 12px; margin-top: 4px;">Runs 24/7 in background with Termux wake-lock</div>
           </div>
         </div>
       </div>
@@ -421,4 +494,35 @@ function toggleMembers() {
 function closeMenus() {
   document.body.classList.remove('sidebar-open');
   document.body.classList.remove('members-open');
+}
+
+// Peppy Radio Player Controls
+let radioAudio = null;
+function toggleRadioPlay() {
+  const btn = document.getElementById('hub-radio-btn');
+  const status = document.getElementById('hub-radio-status');
+  if (!radioAudio) {
+    radioAudio = new Audio('https://192.168.31.178:8443/stream?' + Date.now());
+    const vol = document.getElementById('hub-radio-vol');
+    if (vol) radioAudio.volume = Number(vol.value);
+    radioAudio.play().then(() => {
+      if (btn) btn.innerText = '⏸ Pause';
+      if (status) status.innerText = 'Playing live stream';
+    }).catch(e => {
+      if (status) status.innerHTML = '<span style="color:#ff4d5e;">Certificate prompt: <a href="https://192.168.31.178:8443/" target="_blank" style="color:#ffb347;text-decoration:underline;">Click here once</a> to accept self-signed SSL warning</span>';
+    });
+  } else if (radioAudio.paused) {
+    radioAudio.src = 'https://192.168.31.178:8443/stream?' + Date.now();
+    radioAudio.play();
+    if (btn) btn.innerText = '⏸ Pause';
+    if (status) status.innerText = 'Playing live stream';
+  } else {
+    radioAudio.pause();
+    if (btn) btn.innerText = '▶ Tune In';
+    if (status) status.innerText = 'Stream paused';
+  }
+}
+
+function setRadioVolume(v) {
+  if (radioAudio) radioAudio.volume = Number(v);
 }

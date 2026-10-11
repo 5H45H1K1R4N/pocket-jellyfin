@@ -129,9 +129,9 @@ wss.on('connection', (ws) => {
       let uname = parsed.username || 'Anonymous';
       
       if (uname.toLowerCase() === 'admin' || uname.includes('5H')) {
-        client.username = '5HÎ±5HÄ±kRÎ±Î·';
+        client.username = '5Hα5HıkRαη';
         client.role = 'admin';
-        client.status = 'ðŸ•¶ï¸ V!83_C0D!N6';
+        client.status = '🕶️ V!83_C0D!N6';
       } else {
         client.username = uname;
         client.role = 'family';
@@ -180,6 +180,6 @@ function broadcastMessage(msgObj) {
 
 const PORT = 7777;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`ðŸš€ KHURE Home Hub running at http://127.0.0.1:${PORT}/`);
+  console.log(`🚀 KHURE Home Hub running at http://0.0.0.0:${PORT}/`);
   console.log(`   Real-time WebSockets and File Drop enabled.`);
 });

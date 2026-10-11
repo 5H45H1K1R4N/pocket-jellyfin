@@ -1,0 +1,10 @@
+{
+  "name": "peppy-radio",
+  "version": "1.0.0",
+  "description": "Private LAN radio: 24/7 music plus live voice broadcast",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "ws": "^8.18.0" },
+  "license": "UNLICENSED",
+  "private": true
+}
