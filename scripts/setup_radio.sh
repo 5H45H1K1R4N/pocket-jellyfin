@@ -22,7 +22,9 @@ npm install --omit=dev
 
 mkdir -p "$RADIO_DIR/music" "$RADIO_DIR/jingles" "$RADIO_DIR/certs"
 
-termux-setup-storage 2>/dev/null || true
+if [ ! -d "$HOME/storage" ]; then
+    termux-setup-storage 2>/dev/null || true
+fi
 if [ -d "$HOME/storage/shared/Music" ]; then
     echo "  [✔] Linking existing songs from ~/storage/shared/Music..."
     find "$HOME/storage/shared/Music" -type f -iname "*.mp3" -exec ln -sf {} "$RADIO_DIR/music/" \; 2>/dev/null || true
